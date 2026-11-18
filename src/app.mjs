@@ -264,10 +264,10 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
       return json(res, 200, { ok: true });
     }
 
-    if (method === 'POST' && (m = path.match(/^\/api\/admin\/children\/(\d+)$/))) {
+    if (method === 'POST' && (m = path.match(/^\/api\/admin\/children(?:\/(\d+))?$/))) {
       const admin = requireAdmin(req);
-      const id = Number(m[1]);
-      if (!db_.getChild(db, id)) throw new HttpError(404, 'Criança não encontrada');
+      const id = m[1] ? Number(m[1]) : null;
+      if (id && !db_.getChild(db, id)) throw new HttpError(404, 'Criança não encontrada');
       const body = await readJson(req);
       const data = {};
       for (const k of db_.EDITABLE) {
@@ -276,14 +276,16 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
         data[k] = v || null;
       }
       if (!data.class_name || !data.name) throw new HttpError(400, 'Turma e nome são obrigatórios');
+      let savedId = id;
       try {
-        db_.updateChild(db, id, data);
+        if (id) db_.updateChild(db, id, data);
+        else savedId = db_.createChild(db, data);
       } catch (err) {
         if (/UNIQUE/.test(err.message)) throw new HttpError(409, 'Já existe uma criança com esse nome nessa turma');
         throw err;
       }
-      console.log(`edit child=${id} by=${admin.email}`);
-      return json(res, 200, childView(db_.getChild(db, id), admin, true));
+      console.log(`${id ? 'edit' : 'create'} child=${savedId} by=${admin.email}`);
+      return json(res, 200, childView(db_.getChild(db, savedId), admin, true));
     }
 
     if (method === 'POST' && path === '/api/admin/import') {

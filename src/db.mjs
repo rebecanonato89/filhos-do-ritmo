@@ -158,6 +158,12 @@ export function deleteDemoChildren(db) {
 
 export const EDITABLE = ['class_name', 'name', 'age', 'gift_1', 'gift_2', 'gift_3', 'shirt_size', 'pants_size', 'shoe_size'];
 
+export function createChild(db, data) {
+  const cols = EDITABLE.join(', ');
+  const res = db.prepare(`INSERT INTO children (${cols}) VALUES (${EDITABLE.map(() => '?').join(', ')})`).run(...EDITABLE.map((k) => data[k] ?? null));
+  return Number(res.lastInsertRowid);
+}
+
 /** Corrige os dados digitados da cartinha. Lança erro de UNIQUE se turma+nome já existir. */
 export function updateChild(db, id, data) {
   const sets = EDITABLE.map((k) => `${k} = ?`).join(', ');

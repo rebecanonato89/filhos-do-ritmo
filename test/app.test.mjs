@@ -236,3 +236,14 @@ test('gestor edita os dados da cartinha; padrinho não pode; nome duplicado na t
   assert.ok(updated.photo_url, 'imagem preservada');
   assert.equal((await post(`/api/admin/children/${carlos.id}`, admin, { ...body, class_name: ana.class_name, name: ana.name })).status, 409);
 });
+
+test('gestor cadastra nova criança sem planilha; padrinho não pode', async () => {
+  const body = { class_name: 'Turma 5', name: 'Nova Criança', age: '7', gift_1: 'Bola' };
+  assert.equal((await post('/api/admin/children', alice, body)).status, 403);
+  const r = await post('/api/admin/children', admin, body);
+  assert.equal(r.status, 200);
+  const c = await r.json();
+  assert.ok(c.id);
+  assert.equal(c.status, 'available');
+  assert.equal((await post('/api/admin/children', admin, body)).status, 409, 'duplicada');
+});
