@@ -1,0 +1,11 @@
+{
+  "name": "filhos-do-ritmo",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.5" },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning src/server.mjs",
+    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.mjs",
+    "import": "node --disable-warning=ExperimentalWarning scripts/import.mjs"
+  }
+}

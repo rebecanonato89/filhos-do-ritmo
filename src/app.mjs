@@ -1,0 +1,296 @@
+import { readFile, stat } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { join, basename, extname } from 'node:path';
+import * as db_ from './db.mjs';
+import * as auth from './auth.mjs';
+
+const PUBLIC_DIR = new URL('../public/', import.meta.url).pathname;
+
+const STATIC = {
+  '/': ['index.html', 'text/html; charset=utf-8'],
+  '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
+  '/styles.css': ['styles.css', 'text/css; charset=utf-8'],
+  '/logo.jpg': ['logo.jpg', 'image/jpeg'],
+  '/icon.png': ['icon.png', 'image/png'],
+};
+
+const PHOTO_TYPES = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
+
+const SECURITY_HEADERS = {
+  'X-Robots-Tag': 'noindex, nofollow, noarchive',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'no-referrer',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Strict-Transport-Security': 'max-age=31536000',
+  'Content-Security-Policy':
+    "default-src 'self'; img-src 'self'; style-src 'self'; script-src 'self'; " +
+    "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+};
+
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
+function send(res, status, body, headers = {}) {
+  res.writeHead(status, { ...SECURITY_HEADERS, ...headers });
+  res.end(body);
+}
+
+function json(res, status, data) {
+  send(res, status, JSON.stringify(data), { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+}
+
+function redirect(res, location, setCookie = []) {
+  send(res, 302, '', { Location: location, 'Set-Cookie': setCookie, 'Cache-Control': 'no-store' });
+}
+
+async function readJson(req) {
+  // Exigir JSON impede que um <form> de outro site dispare POST (CSRF), somado ao SameSite=Lax.
+  if (!(req.headers['content-type'] || '').startsWith('application/json')) throw new HttpError(415, 'Content-Type inválido');
+  let size = 0;
+  const chunks = [];
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > 10_000) throw new HttpError(413, 'Requisição grande demais');
+    chunks.push(chunk);
+  }
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString() || '{}');
+  } catch {
+    throw new HttpError(400, 'JSON inválido');
+  }
+}
+
+export function normalizePhone(raw) {
+  const digits = String(raw || '').replace(/\D/g, '');
+  const local = digits.startsWith('55') && digits.length >= 12 ? digits.slice(2) : digits;
+  return /^\d{10,11}$/.test(local) ? local : null;
+}
+
+function cleanName(raw) {
+  const name = String(raw || '').replace(/\s+/g, ' ').trim();
+  return name.length >= 3 && name.length <= 120 ? name : null;
+}
+
+function csvCell(v) {
+  let s = v == null ? '' : String(v);
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`; // evita injeção de fórmula ao abrir no Excel
+  return /[;"\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function formatPhone(p) {
+  if (!p) return '';
+  return p.length === 11 ? `(${p.slice(0, 2)}) ${p.slice(2, 7)}-${p.slice(7)}` : `(${p.slice(0, 2)}) ${p.slice(2, 6)}-${p.slice(6)}`;
+}
+
+function childView(c, user, isAdmin) {
+  const base = {
+    id: c.id,
+    class_name: c.class_name,
+    name: c.name,
+    photo_url: c.photo ? `/photos/${encodeURIComponent(c.photo)}` : null,
+    gifts: [c.gift_1, c.gift_2, c.gift_3].filter(Boolean),
+    sizes: { shirt: c.shirt_size, pants: c.pants_size, shoe: c.shoe_size },
+    status: c.sponsor_email ? 'sponsored' : 'available',
+    mine: c.sponsor_email === user.email,
+  };
+  if (base.mine || isAdmin) base.delivered = c.delivered === 1;
+  if (isAdmin) {
+    Object.assign(base, {
+      sponsor_name: c.sponsor_name,
+      sponsor_email: c.sponsor_email,
+      sponsor_phone: formatPhone(c.sponsor_phone),
+      sponsor_phone_digits: c.sponsor_phone,
+      sponsored_at: c.sponsored_at,
+      delivered_at: c.delivered_at,
+    });
+  }
+  return base;
+}
+
+export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }) {
+  const isAdmin = (user) => config.adminEmails.includes(user.email);
+  const canSee = (user) => isAdmin(user) || !config.requireApproval || db_.isApproved(db, user.email);
+
+  function requireUser(req) {
+    const user = auth.readSession(req, config);
+    if (!user) throw new HttpError(401, 'Faça login');
+    return user;
+  }
+
+  function requireViewer(req) {
+    const user = requireUser(req);
+    if (!canSee(user)) throw new HttpError(403, 'Acesso aguardando aprovação');
+    return user;
+  }
+
+  function requireAdmin(req) {
+    const user = requireUser(req);
+    if (!isAdmin(user)) throw new HttpError(403, 'Apenas gestores');
+    return user;
+  }
+
+  function checkOrigin(req) {
+    const origin = req.headers.origin;
+    if (origin && origin !== config.baseUrl) throw new HttpError(403, 'Origem inválida');
+  }
+
+  async function route(req, res) {
+    const url = new URL(req.url, config.baseUrl);
+    const path = url.pathname;
+    const method = req.method;
+    if (method === 'POST') checkOrigin(req);
+
+    if (method === 'GET' && STATIC[path]) {
+      const [file, type] = STATIC[path];
+      const body = await readFile(join(PUBLIC_DIR, file));
+      return send(res, 200, body, { 'Content-Type': type, 'Cache-Control': path === '/' ? 'no-cache' : 'public, max-age=300' });
+    }
+
+    if (method === 'GET' && path === '/health') return json(res, 200, { ok: true });
+
+    // ---- Autenticação ----
+    if (method === 'GET' && path === '/auth/google') {
+      if (!config.googleClientId) throw new HttpError(503, 'Login Google não configurado');
+      const { location, setCookie } = auth.startGoogleLogin(config);
+      return redirect(res, location, [setCookie]);
+    }
+
+    if (method === 'GET' && path === '/auth/google/callback') {
+      const state = url.searchParams.get('state');
+      const code = url.searchParams.get('code');
+      const expected = auth.readStateCookie(req);
+      if (!code || !state || !expected || state !== expected) return redirect(res, '/?erro=login', [auth.clearStateCookie(config)]);
+      let user;
+      try {
+        user = await exchangeCode(code, config);
+      } catch (err) {
+        console.error('login failed', err.message);
+        return redirect(res, '/?erro=login', [auth.clearStateCookie(config)]);
+      }
+      db_.recordLogin(db, user);
+      return redirect(res, '/', [auth.clearStateCookie(config), auth.createSessionCookie(user, config)]);
+    }
+
+    if (method === 'POST' && path === '/auth/logout') {
+      res.setHeader('Set-Cookie', auth.clearSessionCookie(config));
+      return json(res, 200, { ok: true });
+    }
+
+    // ---- Padrinho ----
+    if (method === 'GET' && path === '/api/me') {
+      const user = auth.readSession(req, config);
+      if (!user) return json(res, 200, { authenticated: false });
+      return json(res, 200, {
+        authenticated: true,
+        email: user.email,
+        name: user.name,
+        is_admin: isAdmin(user),
+        approved: canSee(user),
+        sponsor: db_.getSponsor(db, user.email) || null,
+      });
+    }
+
+    if (method === 'GET' && path === '/api/children') {
+      const user = requireViewer(req);
+      const admin = isAdmin(user);
+      return json(res, 200, db_.listChildren(db).map((c) => childView(c, user, admin)));
+    }
+
+    let m;
+    if (method === 'POST' && (m = path.match(/^\/api\/children\/(\d+)\/sponsor$/))) {
+      const user = requireViewer(req);
+      const body = await readJson(req);
+      const name = cleanName(body.name);
+      const phone = normalizePhone(body.phone);
+      if (!name) throw new HttpError(400, 'Informe o nome completo (mínimo 3 letras)');
+      if (!phone) throw new HttpError(400, 'Informe um WhatsApp válido com DDD');
+      const id = Number(m[1]);
+      if (!db_.getChild(db, id)) throw new HttpError(404, 'Criança não encontrada');
+      if (!db_.sponsorChild(db, id, { email: user.email, name, phone })) {
+        throw new HttpError(409, 'Essa criança acabou de ser apadrinhada por outra pessoa');
+      }
+      return json(res, 200, childView(db_.getChild(db, id), user, isAdmin(user)));
+    }
+
+    if (method === 'GET' && (m = path.match(/^\/photos\/([^/]+)$/))) {
+      requireViewer(req);
+      const file = basename(decodeURIComponent(m[1]));
+      const type = PHOTO_TYPES[extname(file).toLowerCase()];
+      if (!type) throw new HttpError(404, 'Não encontrado');
+      const full = join(config.photosDir, file);
+      try {
+        await stat(full);
+      } catch {
+        throw new HttpError(404, 'Não encontrado');
+      }
+      res.writeHead(200, { ...SECURITY_HEADERS, 'Content-Type': type, 'Cache-Control': 'private, max-age=3600' });
+      return createReadStream(full).pipe(res);
+    }
+
+    // ---- Gestor ----
+    if (method === 'POST' && (m = path.match(/^\/api\/admin\/children\/(\d+)\/delivered$/))) {
+      requireAdmin(req);
+      const body = await readJson(req);
+      if (!db_.setDelivered(db, Number(m[1]), body.delivered === true)) throw new HttpError(409, 'Criança sem padrinho');
+      return json(res, 200, { ok: true });
+    }
+
+    if (method === 'POST' && (m = path.match(/^\/api\/admin\/children\/(\d+)\/release$/))) {
+      const admin = requireAdmin(req);
+      const id = Number(m[1]);
+      const before = db_.getChild(db, id);
+      if (!before) throw new HttpError(404, 'Criança não encontrada');
+      db_.releaseChild(db, id);
+      console.log(`release child=${id} by=${admin.email} previous_sponsor=${before.sponsor_email}`);
+      return json(res, 200, { ok: true });
+    }
+
+    if (method === 'GET' && path === '/api/admin/users') {
+      requireAdmin(req);
+      return json(res, 200, db_.listUsers(db).map((u) => ({ ...u, approved: u.approved === 1 })));
+    }
+
+    if (method === 'POST' && path === '/api/admin/users/approval') {
+      const admin = requireAdmin(req);
+      const body = await readJson(req);
+      const email = String(body.email || '').toLowerCase();
+      if (!db_.setApproved(db, email, body.approved === true)) throw new HttpError(404, 'Usuário não encontrado');
+      console.log(`approval email=${email} approved=${body.approved === true} by=${admin.email}`);
+      return json(res, 200, { ok: true });
+    }
+
+    if (method === 'GET' && path === '/api/admin/export.csv') {
+      requireAdmin(req);
+      const header = ['Turma', 'Criança', 'Pedido 1', 'Pedido 2', 'Pedido 3', 'Camisa', 'Calça', 'Sapato', 'Status', 'Padrinho', 'E-mail', 'WhatsApp', 'Apadrinhado em', 'Entregue'];
+      const rows = db_.listChildren(db).map((c) => [
+        c.class_name, c.name, c.gift_1, c.gift_2, c.gift_3, c.shirt_size, c.pants_size, c.shoe_size,
+        c.sponsor_email ? 'Apadrinhada' : 'Disponível', c.sponsor_name, c.sponsor_email, formatPhone(c.sponsor_phone),
+        c.sponsored_at ? new Date(c.sponsored_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '',
+        c.sponsor_email ? (c.delivered ? 'Sim' : 'Não') : '',
+      ]);
+      const csv = '﻿' + [header, ...rows].map((r) => r.map(csvCell).join(';')).join('\r\n');
+      return send(res, 200, csv, {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="filhos-do-ritmo-apadrinhamentos.csv"',
+        'Cache-Control': 'no-store',
+      });
+    }
+
+    throw new HttpError(404, 'Não encontrado');
+  }
+
+  return async (req, res) => {
+    try {
+      await route(req, res);
+    } catch (err) {
+      if (err instanceof HttpError) return json(res, err.status, { error: err.message });
+      console.error(err);
+      if (!res.headersSent) json(res, 500, { error: 'Erro interno' });
+    }
+  };
+}

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#000000">
+  <title>Filhos do Ritmo · Natal Solidário</title>
+  <link rel="icon" href="/icon.png">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar" id="topbar" hidden>
+    <img src="/logo.jpg" alt="" class="topbar-logo">
+    <div class="topbar-title">
+      <strong>Filhos do Ritmo</strong>
+      <span>Natal Solidário</span>
+    </div>
+    <nav class="topbar-nav" id="adminNav" hidden>
+      <button type="button" data-view="sponsor" class="tab active">Cartinhas</button>
+      <button type="button" data-view="admin" class="tab">Painel</button>
+    </nav>
+    <button type="button" class="link" id="logoutBtn">Sair</button>
+  </header>
+
+  <main id="app">
+    <section class="center" id="loading"><p>Carregando…</p></section>
+
+    <section class="center" id="loginView" hidden>
+      <img src="/logo.jpg" alt="Filhos do Ritmo — Na batida de vários corações" class="hero-logo">
+      <h1>Natal Solidário</h1>
+      <p>Escolha uma cartinha e presenteie uma criança do projeto neste Natal.</p>
+      <a class="btn btn-google" href="/auth/google">Entrar com Google</a>
+      <p class="muted small">Para proteger as crianças, as fotos e cartinhas só aparecem para padrinhos identificados e liberados pela organização.</p>
+      <p class="error" id="loginError" hidden>Não foi possível entrar. Tente novamente.</p>
+    </section>
+
+    <section class="center" id="pendingView" hidden>
+      <img src="/logo.jpg" alt="" class="hero-logo small-logo">
+      <h1>Quase lá!</h1>
+      <p>Seu acesso (<strong id="pendingEmail"></strong>) foi registrado e está aguardando liberação da organização.</p>
+      <p class="muted">Avise a responsável pelas cartinhas no grupo do WhatsApp. Assim que for liberado, é só recarregar esta página.</p>
+      <button type="button" class="btn" id="recheckBtn">Já fui liberado(a), recarregar</button>
+    </section>
+
+    <section id="sponsorView" hidden>
+      <div class="intro">
+        <p>Cada criança escreveu <strong>3 opções de presente</strong>. Você escolhe dar uma ou mais, de acordo com suas condições. Se quiser, também pode presentear com roupa ou calçado (tamanhos no cartão).</p>
+        <p class="deadline">📦 Entrega dos presentes até <strong>01/12</strong>.</p>
+      </div>
+
+      <div id="mine" hidden>
+        <h2>Minhas crianças</h2>
+        <div class="grid" id="mineGrid"></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="chips" id="classChips"></div>
+        <label class="switch"><input type="checkbox" id="onlyAvailable"> Só disponíveis</label>
+      </div>
+      <p class="counter" id="counter"></p>
+      <div id="classes"></div>
+    </section>
+
+    <section id="adminView" hidden>
+      <div class="stats" id="stats"></div>
+      <div class="toolbar">
+        <select id="adminFilter">
+          <option value="all">Todas</option>
+          <option value="available">Disponíveis</option>
+          <option value="sponsored">Apadrinhadas</option>
+          <option value="pending">Entrega pendente</option>
+          <option value="delivered">Entregues</option>
+        </select>
+        <select id="adminClass"><option value="">Todas as turmas</option></select>
+        <input type="search" id="adminSearch" placeholder="Buscar criança ou padrinho">
+        <a class="btn btn-small" href="/api/admin/export.csv">Exportar planilha</a>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Turma</th><th>Criança</th><th>Padrinho</th><th>WhatsApp</th><th>Apadrinhado em</th><th>Entregue</th><th></th></tr></thead>
+          <tbody id="adminRows"></tbody>
+        </table>
+      </div>
+
+      <h2>Acessos</h2>
+      <p class="muted small">Quem fez login aparece aqui. Só quem estiver liberado vê as fotos e cartinhas.</p>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Nome (Google)</th><th>E-mail</th><th>Primeiro acesso</th><th>Situação</th><th></th></tr></thead>
+          <tbody id="userRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="sponsorDialog">
+    <form method="dialog" id="sponsorForm">
+      <h2>Apadrinhar <span id="dlgChild"></span></h2>
+      <ul class="gifts" id="dlgGifts"></ul>
+      <label>Seu nome completo (ou da empresa)
+        <input name="name" id="dlgName" required minlength="3" maxlength="120" autocomplete="name">
+      </label>
+      <label>WhatsApp com DDD
+        <input name="phone" id="dlgPhone" required inputmode="tel" autocomplete="tel" placeholder="(35) 99999-9999">
+      </label>
+      <p class="muted small">A organização usará esse telefone só para combinar a entrega do presente até 01/12.</p>
+      <p class="error" id="dlgError" hidden></p>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" id="dlgCancel">Cancelar</button>
+        <button type="submit" class="btn" id="dlgSubmit">Confirmar apadrinhamento</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="photoDialog" class="photo-dialog">
+    <img id="photoBig" alt="">
+    <button type="button" class="btn" id="photoClose">Fechar</button>
+  </dialog>
+
+  <div class="toast" id="toast" hidden></div>
+</body>
+</html>

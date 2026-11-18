@@ -1,0 +1,80 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+
+  build-push:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/filhos-do-ritmo:latest
+            ${{ secrets.DOCKER_USERNAME }}/filhos-do-ritmo:${{ github.sha }}
+
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copiar compose para a VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: docker-compose.yml
+          target: /home/${{ secrets.VPS_USER }}/filhos-do-ritmo
+      - name: Subir container
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          ADMIN_EMAILS: ${{ secrets.ADMIN_EMAILS }}
+          IMAGE_TAG: ${{ github.sha }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: DOCKER_USERNAME,SESSION_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,ADMIN_EMAILS,IMAGE_TAG
+          script: |
+            set -e
+            cd /home/${{ secrets.VPS_USER }}/filhos-do-ritmo
+            umask 077
+            {
+              echo "DOCKER_USERNAME=$DOCKER_USERNAME"
+              echo "IMAGE_TAG=$IMAGE_TAG"
+              echo "SESSION_SECRET=$SESSION_SECRET"
+              echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
+              echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET"
+              echo "ADMIN_EMAILS=$ADMIN_EMAILS"
+            } > .env
+            docker compose pull
+            docker compose up -d --remove-orphans
+            sleep 5
+            docker compose ps
+            docker image prune -f
