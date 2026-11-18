@@ -1,0 +1,9 @@
+{
+  "name": "filhos-do-ritmo-tools",
+  "private": true,
+  "type": "module",
+  "description": "Ferramentas locais (não vão para o servidor): montar a saída das cartinhas e enviar ao portal.",
+  "dependencies": {
+    "sharp": "^0.33.5"
+  }
+}

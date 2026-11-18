@@ -60,7 +60,7 @@ for (const turma of turmas) {
       else if (usedPhotos.has(c.foto)) problems.push(`${where}: foto ${c.foto} já usada por ${usedPhotos.get(c.foto)}`);
       else usedPhotos.set(c.foto, name);
     } else warnings.push(`${where}: sem foto da criança`);
-    for (const f of [c.cartinha, c.foto]) if (f && /\.(heic|heif)$/i.test(f)) problems.push(`${where}: ${f} é HEIC; o navegador não lê. Exporte como JPG.`);
+    for (const f of [c.cartinha, c.foto]) if (f && /\.(heic|heif)$/i.test(f)) warnings.push(`${where}: ${f} é HEIC; envie pelo tools/enviar-portal.mjs (o Painel no navegador não lê HEIC).`);
 
     const key = norm(name);
     if (seenNames.has(key)) problems.push(`${where}: nome "${name}" repetido (também em ${seenNames.get(key)}). O envio em lote casa pelo nome; diferencie (ex.: sobrenome) ou envie pelos ícones 📷/✉️ no Painel.`);

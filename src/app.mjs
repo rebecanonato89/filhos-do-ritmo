@@ -1,5 +1,5 @@
 import { readFile, stat, writeFile, unlink } from 'node:fs/promises';
-import { randomBytes, createHash } from 'node:crypto';
+import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { childrenFromCsv } from './csv.mjs';
 import { createReadStream } from 'node:fs';
 import { join, basename, extname } from 'node:path';
@@ -137,11 +137,21 @@ function assetVersion() {
 }
 
 export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }) {
-  const isAdmin = (user) => config.adminEmails.includes(user.email);
+  const isAdmin = (user) => user.api === true || config.adminEmails.includes(user.email);
+
+  // Chave para automação (Claude Code local enviando as cartinhas). Desligada se ausente/curta.
+  const apiToken = config.apiToken && config.apiToken.length >= 32 ? Buffer.from(config.apiToken) : null;
+  function readApiToken(req) {
+    const m = /^Bearer (.+)$/.exec(req.headers.authorization || '');
+    if (!apiToken || !m) return null;
+    const given = Buffer.from(m[1]);
+    if (given.length !== apiToken.length || !timingSafeEqual(given, apiToken)) return null;
+    return { email: 'automacao@filhosdoritmo', name: 'Envio automático', api: true };
+  }
   const canSee = (user) => isAdmin(user) || !config.requireApproval || db_.isApproved(db, user.email);
 
   function requireUser(req) {
-    const user = auth.readSession(req, config);
+    const user = readApiToken(req) || auth.readSession(req, config);
     if (!user) throw new HttpError(401, 'Faça login');
     return user;
   }

@@ -34,6 +34,7 @@ SESSION_SECRET=$(openssl rand -hex 32) ADMIN_EMAILS=voce@gmail.com npm start   #
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | do passo 2 |
 | `SESSION_SECRET` | `openssl rand -hex 32` |
 | `ADMIN_EMAILS` | e-mails dos gestores separados por vírgula |
+| `ADMIN_API_TOKEN` | chave do envio automático: `openssl rand -hex 32` (o mesmo valor vai no `.env.portal` local) |
 
 Push na `main`: testes, imagem no Docker Hub, deploy em `~/filhos-do-ritmo` na VPS, usando o Traefik do allrev.
 
@@ -52,7 +53,13 @@ Sem planilha? O Claude Code lê as fotos das cartinhas no seu computador e gera 
    - `fotos/<Nome>.jpg` e `cartinhas/<Nome>.jpg`
    - `revisao.html`
 4. **Abra `revisao.html` e confira**, principalmente o que estiver em laranja (letra duvidosa ou foto com casamento incerto). Corrija no `dados.json` e rode o montador de novo.
-5. Suba no Painel (passos abaixo): planilha, depois a pasta `fotos`, depois a pasta `cartinhas`.
+5. Envie ao portal **pelo próprio Claude Code** (ou manualmente pelo Painel, passos abaixo):
+   ```bash
+   npm install --prefix tools                                  # uma vez
+   node tools/enviar-portal.mjs cartinhas/_saida               # simulação: mostra o que vai acontecer
+   node tools/enviar-portal.mjs cartinhas/_saida --enviar      # envia de verdade
+   ```
+   Precisa do arquivo `.env.portal` (fora do Git) com `FDR_TOKEN=<valor do secret ADMIN_API_TOKEN>`. A marca d'água e a remoção do GPS acontecem no seu computador antes do envio.
 
 ## Carga das crianças (pelo Painel, sem SSH)
 Em **Painel → 📥 Carregar planilha e fotos**:
