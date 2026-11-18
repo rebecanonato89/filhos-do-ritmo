@@ -7,7 +7,8 @@ ENV NODE_ENV=production DATA_DIR=/data PORT=3000
 COPY package.json ./
 COPY src ./src
 COPY public ./public
-COPY scripts/import.mjs ./scripts/import.mjs
+COPY scripts/import.mjs scripts/demo.mjs ./scripts/
+COPY demo ./demo
 
 RUN mkdir -p /data/photos /data/backups && chown -R node:node /data
 USER node

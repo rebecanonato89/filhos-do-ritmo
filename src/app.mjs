@@ -95,6 +95,7 @@ function childView(c, user, isAdmin) {
     photo_url: c.photo ? `/photos/${encodeURIComponent(c.photo)}` : null,
     gifts: [c.gift_1, c.gift_2, c.gift_3].filter(Boolean),
     sizes: { shirt: c.shirt_size, pants: c.pants_size, shoe: c.shoe_size },
+    letter: c.letter || null,
     status: c.sponsor_email ? 'sponsored' : 'available',
     mine: c.sponsor_email === user.email,
   };
