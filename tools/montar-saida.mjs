@@ -16,7 +16,7 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(join(out, 'fotos'), { recursive: true });
 mkdirSync(join(out, 'cartinhas'), { recursive: true });
 
-const FIELDS = ['nome', 'idade', 'pedido1', 'pedido2', 'pedido3', 'camisa', 'calca', 'tenis'];
+const FIELDS = ['nome', 'idade', 'sexo', 'pedido1', 'pedido2', 'pedido3', 'camisa', 'calca', 'tenis'];
 const IMG = /\.(jpe?g|png|webp|heic|heif)$/i;
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const clean = (v) => (v == null ? '' : String(v).replace(/\s*\[\?\]\s*/g, ' ').replace(/\s+/g, ' ').trim());
@@ -77,12 +77,12 @@ for (const turma of turmas) {
 }
 
 // Planilha no formato que o Painel importa (UTF-8 com BOM; marcações [?] removidas).
-const header = ['Turma', 'Nome', 'Idade', 'Pedido 1', 'Pedido 2', 'Pedido 3', 'Camisa', 'Calça', 'Tênis'];
-const lines = rows.map(({ turma, name, c }) => [turma, name, c.idade, c.pedido1, c.pedido2, c.pedido3, c.camisa, c.calca, c.tenis].map((v) => csvCell(clean(v))).join(';'));
+const header = ['Turma', 'Nome', 'Idade', 'Sexo', 'Pedido 1', 'Pedido 2', 'Pedido 3', 'Camisa', 'Calça', 'Tênis'];
+const lines = rows.map(({ turma, name, c }) => [turma, name, c.idade, c.sexo, c.pedido1, c.pedido2, c.pedido3, c.camisa, c.calca, c.tenis].map((v) => csvCell(clean(v))).join(';'));
 writeFileSync(join(out, 'planilha.csv'), '﻿' + [header.join(';'), ...lines].join('\r\n') + '\r\n');
 
 // Página de revisão: cartinha e foto lado a lado, dúvidas em destaque.
-const label = { nome: 'Nome', idade: 'Idade', pedido1: 'Pedido 1', pedido2: 'Pedido 2', pedido3: 'Pedido 3', camisa: 'Camisa', calca: 'Calça', tenis: 'Tênis' };
+const label = { nome: 'Nome', idade: 'Idade', sexo: 'Sexo (F/M)', pedido1: 'Pedido 1', pedido2: 'Pedido 2', pedido3: 'Pedido 3', camisa: 'Camisa', calca: 'Calça', tenis: 'Tênis' };
 const cards = rows.map(({ turma, c, doubts, letterFile, photoFile }) => `
   <article class="${doubts.size ? 'doubt' : ''}">
     <div class="imgs">

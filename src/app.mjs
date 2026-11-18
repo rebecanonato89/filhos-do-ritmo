@@ -109,6 +109,7 @@ function childView(c, user, isAdmin) {
     gifts: [c.gift_1, c.gift_2, c.gift_3].filter(Boolean),
     sizes: { shirt: c.shirt_size, pants: c.pants_size, shoe: c.shoe_size },
     age: c.age || null,
+    gender: c.gender || null,
     status: c.sponsor_email ? 'sponsored' : 'available',
     mine: c.sponsor_email === user.email,
   };
@@ -370,9 +371,9 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
 
     if (method === 'GET' && path === '/api/admin/export.csv') {
       requireAdmin(req);
-      const header = ['Turma', 'Criança', 'Idade', 'Pedido 1', 'Pedido 2', 'Pedido 3', 'Camisa', 'Calça', 'Tênis', 'Status', 'Padrinho', 'E-mail', 'WhatsApp', 'Apadrinhado em', 'Entregue'];
+      const header = ['Turma', 'Criança', 'Idade', 'Sexo', 'Pedido 1', 'Pedido 2', 'Pedido 3', 'Camisa', 'Calça', 'Tênis', 'Status', 'Padrinho', 'E-mail', 'WhatsApp', 'Apadrinhado em', 'Entregue'];
       const rows = db_.listChildren(db).map((c) => [
-        c.class_name, c.name, c.age, c.gift_1, c.gift_2, c.gift_3, c.shirt_size, c.pants_size, c.shoe_size,
+        c.class_name, c.name, c.age, c.gender === 'F' ? 'Menina' : c.gender === 'M' ? 'Menino' : '', c.gift_1, c.gift_2, c.gift_3, c.shirt_size, c.pants_size, c.shoe_size,
         c.sponsor_email ? 'Apadrinhada' : 'Disponível', c.sponsor_name, c.sponsor_email, formatPhone(c.sponsor_phone),
         c.sponsored_at ? new Date(c.sponsored_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : '',
         c.sponsor_email ? (c.delivered ? 'Sim' : 'Não') : '',

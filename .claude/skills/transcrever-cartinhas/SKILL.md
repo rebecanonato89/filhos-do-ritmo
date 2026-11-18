@@ -36,6 +36,7 @@ O nome da subpasta é o nome da turma que aparece no portal. Se a estrutura não
 3. Para cada cartinha, abra a imagem e extraia os campos do modelo:
    - "Meu nome é" → `nome`
    - "Eu tenho __ anos" → `idade` (só o número)
+   - `sexo`: a cartinha **não** informa. Sugira `F` ou `M` pelo nome e pela foto, mas **sempre** inclua `sexo` em `duvidas` para a revisão confirmar. Nome ambíguo → `null`.
    - as 3 linhas de "Neste Natal, eu gostaria de ganhar" → `pedido1`, `pedido2`, `pedido3`
    - "Meus tamanhos": Camiseta → `camisa`, Calça → `calca`, Tênis → `tenis`
    - compare a foto colada com as fotos do passo 2 e escolha o arquivo → `foto`. Em `foto_confianca` use `alta` só se tiver certeza; se ficar entre duas, escolha uma, use `baixa` e explique em `obs`.
@@ -50,13 +51,14 @@ O nome da subpasta é o nome da turma que aparece no portal. Se a estrutura não
     "foto_confianca": "alta",
     "nome": "Thessália Vitória Oliveira",
     "idade": "8",
+    "sexo": "F",
     "pedido1": "Bebê Reborn",
     "pedido2": "Kit de pulseira",
     "pedido3": "Squishy de gelo",
     "camisa": "10",
     "calca": "10",
     "tenis": "31",
-    "duvidas": [],
+    "duvidas": ["sexo"],
     "obs": null
   }
 ]

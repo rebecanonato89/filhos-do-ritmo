@@ -50,6 +50,9 @@ export function openDb(file) {
   if (!cols.includes('letter')) db.exec('ALTER TABLE children ADD COLUMN letter TEXT');
   if (!cols.includes('age')) db.exec('ALTER TABLE children ADD COLUMN age TEXT');
   if (!cols.includes('letter_photo')) db.exec('ALTER TABLE children ADD COLUMN letter_photo TEXT');
+  if (!cols.includes('gender')) db.exec('ALTER TABLE children ADD COLUMN gender TEXT');
+  // Padroniza números de 1 dígito com zero à esquerda (5 → 05) nos dados já gravados.
+  for (const col of PADDED) db.exec(`UPDATE children SET ${col} = '0' || ${col} WHERE ${col} GLOB '[0-9]'`);
   // A cartinha real não tem texto livre; limpa o que os primeiros exemplos gravaram.
   db.exec('UPDATE children SET letter = NULL WHERE letter IS NOT NULL');
   return db;
@@ -118,16 +121,17 @@ export function setDelivered(db, id, delivered) {
 /** Upsert por (turma, nome). Nunca toca nos campos de apadrinhamento/entrega. */
 export function upsertChild(db, c) {
   db.prepare(
-    `INSERT INTO children (class_name, name, photo, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size, letter, age, letter_photo)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO children (class_name, name, photo, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size, letter, age, letter_photo, gender)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(class_name, name) DO UPDATE SET
        -- Planilha sem coluna de foto não apaga a imagem enviada pelo Painel.
        photo = COALESCE(excluded.photo, children.photo),
        letter_photo = COALESCE(excluded.letter_photo, children.letter_photo), gift_1 = excluded.gift_1, gift_2 = excluded.gift_2, gift_3 = excluded.gift_3,
        shirt_size = excluded.shirt_size, pants_size = excluded.pants_size, shoe_size = excluded.shoe_size,
-       letter = excluded.letter, age = excluded.age`,
+       letter = excluded.letter, age = excluded.age,
+       gender = COALESCE(excluded.gender, children.gender)`,
   ).run(
-    ...['class_name', 'name', 'photo', 'gift_1', 'gift_2', 'gift_3', 'shirt_size', 'pants_size', 'shoe_size', 'letter', 'age', 'letter_photo'].map((k) => c[k] ?? null),
+    ...['class_name', 'name', 'photo', 'gift_1', 'gift_2', 'gift_3', 'shirt_size', 'pants_size', 'shoe_size', 'letter', 'age', 'letter_photo'].map((k) => (PADDED.includes(k) ? padNumber(c[k]) : c[k] ?? null)), normalizeGender(c.gender),
   );
 }
 
@@ -156,18 +160,33 @@ export function deleteDemoChildren(db) {
   return db.prepare("DELETE FROM children WHERE photo LIKE 'demo-%' OR letter_photo LIKE 'demo-%'").run().changes;
 }
 
-export const EDITABLE = ['class_name', 'name', 'age', 'gift_1', 'gift_2', 'gift_3', 'shirt_size', 'pants_size', 'shoe_size'];
+/** Idade e tamanhos: "5" → "05"; letras (P, M) e números maiores ficam como estão. */
+export const PADDED = ['age', 'shirt_size', 'pants_size', 'shoe_size'];
+export function padNumber(v) {
+  const t = v == null ? v : String(v).trim();
+  return t && /^\d$/.test(t) ? `0${t}` : t || null;
+}
+
+export const EDITABLE = ['class_name', 'name', 'age', 'gender', 'gift_1', 'gift_2', 'gift_3', 'shirt_size', 'pants_size', 'shoe_size'];
+
+/** 'F' | 'M' | null a partir de menina/feminino/F, menino/masculino/M. */
+export function normalizeGender(v) {
+  const k = String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  if (['f', 'fem', 'feminino', 'menina', 'garota'].includes(k)) return 'F';
+  if (['m', 'masc', 'masculino', 'menino', 'garoto'].includes(k)) return 'M';
+  return null;
+}
 
 export function createChild(db, data) {
   const cols = EDITABLE.join(', ');
-  const res = db.prepare(`INSERT INTO children (${cols}) VALUES (${EDITABLE.map(() => '?').join(', ')})`).run(...EDITABLE.map((k) => data[k] ?? null));
+  const res = db.prepare(`INSERT INTO children (${cols}) VALUES (${EDITABLE.map(() => '?').join(', ')})`).run(...EDITABLE.map((k) => (k === 'gender' ? normalizeGender(data[k]) : PADDED.includes(k) ? padNumber(data[k]) : data[k] ?? null)));
   return Number(res.lastInsertRowid);
 }
 
 /** Corrige os dados digitados da cartinha. Lança erro de UNIQUE se turma+nome já existir. */
 export function updateChild(db, id, data) {
   const sets = EDITABLE.map((k) => `${k} = ?`).join(', ');
-  return db.prepare(`UPDATE children SET ${sets} WHERE id = ?`).run(...EDITABLE.map((k) => data[k] ?? null), id).changes === 1;
+  return db.prepare(`UPDATE children SET ${sets} WHERE id = ?`).run(...EDITABLE.map((k) => (k === 'gender' ? normalizeGender(data[k]) : PADDED.includes(k) ? padNumber(data[k]) : data[k] ?? null)), id).changes === 1;
 }
 
 /** Troca a imagem (kind = 'photo' | 'letter_photo') e devolve o arquivo anterior para ser apagado. */
