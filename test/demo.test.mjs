@@ -23,7 +23,8 @@ test('demo seed cria 10 com idade e clear remove só as de exemplo', () => {
   let all = listChildren(db);
   assert.equal(all.length, 11);
   assert.ok(all.filter((c) => c.photo?.startsWith('demo-')).every((c) => c.age && c.gift_1 && c.shoe_size));
-  assert.equal(readdirSync(join(dir, 'photos')).filter((f) => f.startsWith('demo-')).length, 10);
+  assert.equal(readdirSync(join(dir, 'photos')).filter((f) => f.startsWith('demo-')).length, 20);
+  assert.ok(all.filter((c) => c.photo?.startsWith('demo-')).every((c) => c.letter_photo?.startsWith('demo-')));
 
   sponsorChild(db, all.find((c) => c.name === 'Davi').id, { email: 'a@b.com', name: 'Teste', phone: '35999999999' });
   run(dir, 'clear');

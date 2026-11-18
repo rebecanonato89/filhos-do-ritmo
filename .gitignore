@@ -3,3 +3,4 @@ data
 .env
 *.csv
 fotos
+/photos/

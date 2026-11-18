@@ -28,9 +28,10 @@ const action = process.argv[2];
 if (action === 'seed') {
   mkdirSync(photosDir, { recursive: true });
   for (const [class_name, name, slug, age, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size] of DEMO) {
-    const photo = `demo-${slug}.jpg`;
-    copyFileSync(join(sourceDir, photo), join(photosDir, photo));
-    upsertChild(db, { class_name, name, photo, age, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size });
+    const photo = `demo-child-${slug}.jpg`;
+    const letter_photo = `demo-${slug}.jpg`;
+    for (const f of [photo, letter_photo]) copyFileSync(join(sourceDir, f), join(photosDir, f));
+    upsertChild(db, { class_name, name, photo, letter_photo, age, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size });
   }
   console.log(`${DEMO.length} crianças de exemplo criadas.`);
 } else if (action === 'clear') {

@@ -37,24 +37,20 @@ SESSION_SECRET=$(openssl rand -hex 32) ADMIN_EMAILS=voce@gmail.com npm start   #
 
 Push na `main`: testes, imagem no Docker Hub, deploy em `~/filhos-do-ritmo` na VPS, usando o Traefik do allrev.
 
-## Carga das crianças
+## Carga das crianças (pelo Painel, sem SSH)
+Em **Painel → 📥 Carregar planilha e fotos**:
+1. **Planilha CSV** com as colunas `Turma; Nome; Idade; Pedido 1; Pedido 2; Pedido 3; Camisa; Calça; Tênis`. Aceita CSV do Excel (Windows-1252) ou UTF-8. Pode importar de novo para corrigir dados: isso atualiza por (turma, nome) e nunca apaga apadrinhamento, entrega nem imagens.
+2. **Fotos das crianças** e **fotos das cartinhas**: o nome do arquivo deve ser o nome da criança (`Ana Clara Souza.jpg`). Dá para selecionar várias de uma vez. Nomes repetidos em turmas diferentes não são casados; use os ícones 📷 / ✉️ na linha da criança.
 
-1. Fotos: limpar os metadados (o GPS do celular revela onde as fotos foram tiradas), corrigir a rotação e reduzir o tamanho:
-   ```bash
-   python3 scripts/prepare_photos.py fotos-originais/ fotos/
-   ```
-2. A planilha deve ser salva como **CSV**, com cabeçalho `Turma;Nome;Idade;Foto;Pedido 1;Pedido 2;Pedido 3;Camisa;Calça;Tênis` (os campos digitados da cartinha). A coluna `Foto` traz o nome do arquivo da **foto da cartinha inteira** (ex.: `ana-souza.jpg`). É ela que o padrinho vê no card. A coluna opcional `Cartinha` aceita um texto livre, se houver.
-3. Na VPS:
-   ```bash
-   docker cp fotos/. filhos_do_ritmo:/data/photos/
-   docker cp planilha.csv filhos_do_ritmo:/data/planilha.csv
-   docker exec filhos_do_ritmo node --disable-warning=ExperimentalWarning scripts/import.mjs /data/planilha.csv
-   ```
-   A importação pode ser repetida sem risco: ela atualiza por (turma, nome) e nunca apaga apadrinhamento nem entrega. Se uma foto não for encontrada, o script avisa.
+O navegador de quem envia aplica a **marca d'água** (logo no centro da foto; grade suave na cartinha), remove o EXIF/GPS e reduz a imagem. **O arquivo original nunca sai do aparelho.** O servidor só aceita JPEG.
+
+> Não versionar fotos reais neste repositório: elas entrariam no histórico do Git e na imagem Docker.
+
+Alternativa por linha de comando: `scripts/import.mjs` (veja o cabeçalho do arquivo).
 
 ## Dados de exemplo
 Use para testar antes das cartinhas reais. No GitHub, vá em **Actions → Dados de exemplo → Run workflow** e escolha:
-- `seed`: cria 10 cartinhas fictícias no layout real (ilustração no lugar da foto, faixa "EXEMPLO · NÃO É CRIANÇA REAL", Turma Exemplo A/B).
+- `seed`: cria 10 crianças fictícias (foto ilustrada + cartinha no layout real, ambas com marca d'água e faixa "EXEMPLO · NÃO É CRIANÇA REAL", Turma Exemplo A/B).
 - `clear`: apaga **só** as de exemplo, inclusive apadrinhamentos de teste. As crianças reais não são tocadas.
 
 **Rode `clear` antes de divulgar o link aos padrinhos.**

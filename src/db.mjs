@@ -19,6 +19,7 @@ export function openDb(file) {
       shoe_size     TEXT,
       letter        TEXT,
       age           TEXT,
+      letter_photo  TEXT,
       sponsor_email TEXT,
       sponsor_name  TEXT,
       sponsor_phone TEXT,
@@ -48,6 +49,7 @@ export function openDb(file) {
   const cols = db.prepare('PRAGMA table_info(children)').all().map((c) => c.name);
   if (!cols.includes('letter')) db.exec('ALTER TABLE children ADD COLUMN letter TEXT');
   if (!cols.includes('age')) db.exec('ALTER TABLE children ADD COLUMN age TEXT');
+  if (!cols.includes('letter_photo')) db.exec('ALTER TABLE children ADD COLUMN letter_photo TEXT');
   return db;
 }
 
@@ -114,14 +116,16 @@ export function setDelivered(db, id, delivered) {
 /** Upsert por (turma, nome). Nunca toca nos campos de apadrinhamento/entrega. */
 export function upsertChild(db, c) {
   db.prepare(
-    `INSERT INTO children (class_name, name, photo, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size, letter, age)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO children (class_name, name, photo, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size, letter, age, letter_photo)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(class_name, name) DO UPDATE SET
-       photo = excluded.photo, gift_1 = excluded.gift_1, gift_2 = excluded.gift_2, gift_3 = excluded.gift_3,
+       -- Planilha sem coluna de foto não apaga a imagem enviada pelo Painel.
+       photo = COALESCE(excluded.photo, children.photo),
+       letter_photo = COALESCE(excluded.letter_photo, children.letter_photo), gift_1 = excluded.gift_1, gift_2 = excluded.gift_2, gift_3 = excluded.gift_3,
        shirt_size = excluded.shirt_size, pants_size = excluded.pants_size, shoe_size = excluded.shoe_size,
        letter = excluded.letter, age = excluded.age`,
   ).run(
-    ...['class_name', 'name', 'photo', 'gift_1', 'gift_2', 'gift_3', 'shirt_size', 'pants_size', 'shoe_size', 'letter', 'age'].map((k) => c[k] ?? null),
+    ...['class_name', 'name', 'photo', 'gift_1', 'gift_2', 'gift_3', 'shirt_size', 'pants_size', 'shoe_size', 'letter', 'age', 'letter_photo'].map((k) => c[k] ?? null),
   );
 }
 
@@ -147,5 +151,14 @@ export function setApproved(db, email, approved) {
 
 /** Remove só as crianças de exemplo (fotos com prefixo demo-). */
 export function deleteDemoChildren(db) {
-  return db.prepare("DELETE FROM children WHERE photo LIKE 'demo-%'").run().changes;
+  return db.prepare("DELETE FROM children WHERE photo LIKE 'demo-%' OR letter_photo LIKE 'demo-%'").run().changes;
+}
+
+/** Troca a imagem (kind = 'photo' | 'letter_photo') e devolve o arquivo anterior para ser apagado. */
+export function setChildImage(db, id, kind, file) {
+  if (!['photo', 'letter_photo'].includes(kind)) throw new Error('kind inválido');
+  const before = db.prepare(`SELECT ${kind} AS f FROM children WHERE id = ?`).get(id);
+  if (!before) return undefined;
+  db.prepare(`UPDATE children SET ${kind} = ? WHERE id = ?`).run(file, id);
+  return before.f;
 }
