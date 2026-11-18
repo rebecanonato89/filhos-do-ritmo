@@ -60,7 +60,7 @@ function field(value, cls = '') {
 
 function card(c) {
   const photo = c.photo_url
-    ? h('button', { type: 'button', class: 'polaroid-img', onclick: () => openImage(c, 'photo'), 'aria-label': `Ampliar foto de ${c.name}` },
+    ? h('button', { type: 'button', class: 'polaroid-img', onclick: () => openImage(c, 'photo'), 'aria-label': `Ampliar foto de ${c.name}`, 'data-tip': 'Ampliar foto' },
         h('img', { src: c.photo_url, alt: `Foto de ${c.name}`, loading: 'lazy' }))
     : h('div', { class: 'polaroid-img empty' }, '🎁');
 
@@ -80,9 +80,9 @@ function card(c) {
     { class: `card letter-card ${c.status}${c.mine ? ' is-mine' : ''}`, vars: classColor(c.class_name) },
     h('div', { class: 'lc-head' },
       h('span', { class: 'lc-class', vars: classColor(c.class_name) }, c.class_name),
-      state.me.is_admin ? h('button', { type: 'button', class: 'pencil', onclick: () => openEdit(c), title: 'Editar dados desta cartinha (gestor)', 'aria-label': `Editar ${c.name}` }, '✏️') : null,
+      state.me.is_admin ? h('button', { type: 'button', class: 'pencil', onclick: () => openEdit(c), 'data-tip': 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, '✏️') : null,
       c.letter_photo_url
-        ? h('button', { type: 'button', class: 'envelope', onclick: () => openImage(c, 'letter'), title: 'Ver a cartinha original' }, h('span', { 'aria-hidden': 'true' }, '✉️'), ' Ver cartinha')
+        ? h('button', { type: 'button', class: 'envelope', onclick: () => openImage(c, 'letter'), 'data-tip': 'Ver a cartinha original' }, h('span', { 'aria-hidden': 'true' }, '✉️'), ' Ver cartinha')
         : null,
     ),
     h('p', { class: 'lc-dear' }, 'Querido Papai Noel...'),
@@ -187,13 +187,13 @@ function renderAdmin() {
   $('kidsCount').textContent = all.length;
   const sponsored = all.filter((c) => c.status === 'sponsored');
   const delivered = sponsored.filter((c) => c.delivered);
-  const stat = (n, label) => h('div', { class: 'stat' }, h('strong', {}, n), h('span', {}, label));
+  const stat = (icon, n, label, kind) => h('div', { class: `stat stat-${kind}` }, h('span', { class: 'stat-ico', 'aria-hidden': 'true' }, icon), h('div', {}, h('strong', {}, n), h('span', {}, label)));
   $('stats').replaceChildren(
-    stat(all.length, 'crianças'),
-    stat(all.length - sponsored.length, 'disponíveis'),
-    stat(sponsored.length, 'apadrinhadas'),
-    stat(sponsored.length - delivered.length, 'entrega pendente'),
-    stat(delivered.length, 'entregues'),
+    stat('👧', all.length, 'crianças', 'total'),
+    stat('🎁', all.length - sponsored.length, 'disponíveis', 'free'),
+    stat('💛', sponsored.length, 'apadrinhadas', 'taken'),
+    stat('⏳', sponsored.length - delivered.length, 'entrega pendente', 'pending'),
+    stat('✅', delivered.length, 'entregues', 'done'),
   );
 
   const classSel = $('adminClass');
@@ -220,19 +220,19 @@ function renderAdmin() {
       h('tr', { class: c.status },
         h('td', { 'data-label': 'Turma' }, h('span', { class: 'class-pill', vars: classColor(c.class_name) }, c.class_name)),
         h('td', { 'data-label': 'Criança', class: 'cell-title' },
-          h('button', { type: 'button', class: 'pencil pencil-sm', onclick: () => openEdit(c), title: 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, '✏️'),
+          h('button', { type: 'button', class: 'pencil pencil-sm', onclick: () => openEdit(c), 'data-tip': 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, '✏️'),
           c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age})`) : ''),
         h('td', { class: 'nowrap', 'data-label': 'Imagens' },
-          h('button', { type: 'button', class: `img-btn${c.photo_url ? ' has' : ''}`, title: 'Enviar foto da criança', onclick: () => pickOne(c, 'photo') }, '📷'),
-          h('button', { type: 'button', class: `img-btn${c.letter_photo_url ? ' has' : ''}`, title: 'Enviar foto da cartinha', onclick: () => pickOne(c, 'letter') }, '✉️'),
+          h('button', { type: 'button', class: `img-btn${c.photo_url ? ' has' : ''}`, 'data-tip': c.photo_url ? 'Trocar foto da criança' : 'Adicionar foto da criança', 'aria-label': c.photo_url ? 'Trocar foto da criança' : 'Adicionar foto da criança', onclick: () => pickOne(c, 'photo') }, '📷', h('span', {}, c.photo_url ? '✓' : '+')),
+          h('button', { type: 'button', class: `img-btn${c.letter_photo_url ? ' has' : ''}`, 'data-tip': c.letter_photo_url ? 'Trocar cartinha' : 'Adicionar cartinha', 'aria-label': c.letter_photo_url ? 'Trocar cartinha' : 'Adicionar cartinha', onclick: () => pickOne(c, 'letter') }, '✉️', h('span', {}, c.letter_photo_url ? '✓' : '+')),
         ),
-        h('td', { 'data-label': 'Padrinho' }, c.sponsor_name ? [c.sponsor_name, h('br'), h('span', { class: 'muted small' }, c.sponsor_email)] : h('span', { class: 'muted' }, 'Disponível')),
+        h('td', { 'data-label': 'Padrinho' }, c.sponsor_name ? [h('span', { class: `status-pill ${c.delivered ? 'done' : 'taken'}` }, c.delivered ? 'Entregue' : 'Apadrinhada'), h('br'), h('strong', {}, c.sponsor_name), h('br'), h('span', { class: 'muted small' }, c.sponsor_email)] : h('span', { class: 'status-pill free' }, 'Disponível')),
         h('td', { 'data-label': 'WhatsApp', class: c.sponsor_phone_digits ? '' : 'empty-cell' }, c.sponsor_phone_digits
           ? h('a', { href: `https://wa.me/55${c.sponsor_phone_digits}`, target: '_blank', rel: 'noopener' }, c.sponsor_phone)
           : ''),
         h('td', { 'data-label': 'Apadrinhado em', class: c.sponsored_at ? '' : 'empty-cell' }, formatDate(c.sponsored_at)),
         h('td', { 'data-label': 'Entregue', class: c.status === 'sponsored' ? '' : 'empty-cell' }, c.status === 'sponsored'
-          ? h('input', { type: 'checkbox', checked: c.delivered, 'aria-label': `Entregue para ${c.name}`, onchange: (e) => setDelivered(c, e.target.checked) })
+          ? h('input', { type: 'checkbox', checked: c.delivered, 'aria-label': `Entregue para ${c.name}`, title: 'Marcar presente como entregue', onchange: (e) => setDelivered(c, e.target.checked) })
           : ''),
         h('td', { class: c.status === 'sponsored' ? 'cell-actions' : 'empty-cell' }, c.status === 'sponsored' ? h('button', { type: 'button', class: 'link danger', onclick: () => release(c) }, 'Liberar') : ''),
       ),

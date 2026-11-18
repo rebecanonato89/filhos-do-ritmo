@@ -120,8 +120,14 @@ main { flex: 1 0 auto; width: 100%; max-width: 1100px; margin: 0 auto; padding: 
 .upload-log { max-height: 220px; overflow: auto; font-size: .85rem; padding-left: 18px; }
 .upload-log .fail { color: var(--danger); }
 .upload-log .ok { color: var(--ok); }
-.img-btn { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 2px 6px; margin-right: 4px; cursor: pointer; opacity: .45; }
-.img-btn.has { opacity: 1; border-color: var(--ok); }
+.img-btn { display: inline-flex; align-items: center; gap: 3px; border: 1px dashed #c9c2b9; background: #fff; border-radius: 999px; padding: 3px 9px; margin-right: 4px; cursor: pointer; font: inherit; font-size: .85rem; color: var(--muted); }
+.img-btn span { font-weight: 700; }
+.img-btn.has { border: 1px solid var(--ok); background: #eaf6ee; color: var(--ok); }
+.img-btn:hover { border-color: var(--orange); }
+.status-pill { display: inline-block; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 2px 9px; border-radius: 999px; margin-bottom: 3px; }
+.status-pill.free { background: #e8efff; color: #1d4ed8; }
+.status-pill.taken { background: #fff1e5; color: var(--orange-dark); }
+.status-pill.done { background: #eaf6ee; color: var(--ok); }
 .nowrap { white-space: nowrap; }
 
 /* Card no formato da cartinha */
@@ -200,16 +206,22 @@ dialog form, dialog label { min-width: 0; }
 
 /* Painel */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
-.stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; }
-.stat strong { display: block; font-size: 1.6rem; }
+.stat { --sc: var(--ink); display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line); border-left: 5px solid var(--sc); border-radius: var(--radius); padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.stat-ico { font-size: 1.5rem; line-height: 1; }
+.stat strong { display: block; font-size: 1.6rem; line-height: 1.1; color: var(--sc); }
 .stat span { color: var(--muted); font-size: .85rem; }
+.stat > div { min-width: 0; }
+.stat span { overflow-wrap: anywhere; }
+.stat-total { --sc: var(--ink); } .stat-free { --sc: #2563eb; } .stat-taken { --sc: var(--orange-dark); } .stat-pending { --sc: #b45309; } .stat-done { --sc: var(--ok); }
 select, input[type="search"], input:not([type]), input[name] {
   font: inherit; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; min-width: 0;
 }
 input[type="search"] { flex: 1 1 200px; }
 .table-wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
 .table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-.table th, .table td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.table th, .table td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.table tbody tr:hover { background: #fffaf4; }
+.table tbody tr:last-child td { border-bottom: 0; }
 .table th { background: #f3efea; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); white-space: nowrap; }
 .table input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--ok); }
 
@@ -219,6 +231,21 @@ dialog::backdrop { background: rgba(0, 0, 0, .6); }
 dialog label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: .9rem; margin-top: 12px; }
 dialog input { font-weight: 400; }
 .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+/* Botões da janela sempre visíveis, mesmo quando o conteúdo rola (telas baixas). */
+dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff; margin: 16px -20px -20px; padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
+
+/* Tooltips legíveis (data-tip) em quem usa mouse; no toque os ícones já têm rótulo ou abrem direto. */
+@media (hover: hover) {
+  [data-tip] { position: relative; }
+  [data-tip]::after {
+    content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translate(-50%, 4px);
+    background: #111; color: #fff; font: 600 .78rem/1.3 system-ui, sans-serif; padding: 6px 10px; border-radius: 8px;
+    white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .12s, transform .12s; z-index: 60;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25); text-transform: none; letter-spacing: 0;
+  }
+  [data-tip-pos="below"]::after { bottom: auto; top: calc(100% + 8px); transform: translate(-50%, -4px); }
+  [data-tip]:hover::after, [data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); }
+}
 .photo-dialog { width: min(640px, calc(100vw - 32px)); text-align: center; }
 .photo-dialog img { width: 100%; max-height: 75vh; object-fit: contain; border-radius: 10px; margin-bottom: 12px; }
 
@@ -310,6 +337,7 @@ dialog input { font-weight: 400; }
   dialog[open] { animation: sheet-up .2s ease-out; }
   .photo-dialog { width: 100%; }
   .actions .btn { flex: 1; }
+  dialog .actions { bottom: calc(-18px - env(safe-area-inset-bottom)); margin: 16px -16px calc(-18px - env(safe-area-inset-bottom)); padding-left: 16px; padding-right: 16px; }
 
   /* Tabelas do Painel viram cartões */
   .table-wrap { background: none; border: 0; overflow: visible; }
@@ -322,7 +350,8 @@ dialog input { font-weight: 400; }
   .table td.cell-title::before, .table td.cell-actions::before { content: none; }
   .table td.cell-actions { justify-content: flex-end; }
   .table td.empty-cell { display: none; }
-  .stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .stat { gap: 8px; padding: 8px 10px; }
   .stat { padding: 8px 10px; }
   .stat strong { font-size: 1.3rem; }
   .stat span { font-size: .75rem; }
@@ -340,4 +369,7 @@ dialog input { font-weight: 400; }
   .bottomnav .ico { padding: 4px 10px; }
   .seg { padding: 8px 6px; font-size: .85rem; gap: 4px; }
   .admin-head { gap: 6px; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat-ico { font-size: 1.1rem; }
 }
+.table td a[href^="https://wa.me"] { white-space: nowrap; }
