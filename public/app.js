@@ -19,11 +19,23 @@ function h(tag, attrs = {}, ...children) {
 }
 
 // Cor fixa por turma (ordem alfabética), para diferenciar chips, títulos, cards e linhas do Painel.
-const CLASS_COLORS = ['#2563eb', '#9333ea', '#db2777', '#0891b2', '#ca8a04', '#16a34a', '#ea580c', '#4f46e5', '#be123c', '#0d9488'];
+// Tons pastel (infantis) com a "tinta" escura do mesmo tom para o texto ficar legível.
+const CLASS_COLORS = [
+  ['#bfe0fb', '#1f6fb2'], // azul-céu
+  ['#f9c6d8', '#b03a6b'], // rosa-bebê
+  ['#c4efd9', '#1f7a4d'], // verde-menta
+  ['#ddd0fb', '#6b46c1'], // lilás
+  ['#fdd8b5', '#b8590f'], // pêssego
+  ['#fbefa8', '#866a00'], // amarelo-limão
+  ['#bdeef0', '#12808a'], // água
+  ['#fcc9c1', '#b5402e'], // coral
+  ['#cfd8fb', '#3f51b5'], // lavanda
+  ['#def5b8', '#557a12'], // lima
+];
 function classColor(name) {
   const all = [...new Set(state.children.map((c) => c.class_name))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  const i = Math.max(0, all.indexOf(name));
-  return { '--tc': CLASS_COLORS[i % CLASS_COLORS.length] };
+  const [bg, ink] = CLASS_COLORS[Math.max(0, all.indexOf(name)) % CLASS_COLORS.length];
+  return { '--tc': bg, '--tci': ink };
 }
 
 async function api(path, opts = {}) {
