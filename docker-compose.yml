@@ -1,0 +1,32 @@
+# Produção na VPS compartilhada: usa o Traefik do allrev (rede externa allrev-project_allrev-network),
+# no mesmo padrão do buildtrack. Nada aqui toca nos containers do allrev.
+services:
+  app:
+    image: ${DOCKER_USERNAME:?}/filhos-do-ritmo:${IMAGE_TAG:-latest}
+    container_name: filhos_do_ritmo
+    restart: unless-stopped
+    environment:
+      BASE_URL: https://filhosdoritmo.rebecanonato89.dev
+      SESSION_SECRET: ${SESSION_SECRET:?}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:?}
+      REQUIRE_APPROVAL: ${REQUIRE_APPROVAL:-true}
+    volumes:
+      - filhos_data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.filhosdoritmo.rule=Host(`filhosdoritmo.rebecanonato89.dev`)"
+      - "traefik.http.routers.filhosdoritmo.entrypoints=websecure"
+      - "traefik.http.routers.filhosdoritmo.tls.certresolver=myresolver"
+      - "traefik.http.services.filhosdoritmo.loadbalancer.server.port=3000"
+      - "traefik.docker.network=allrev-project_allrev-network"
+    networks:
+      - allrev-project_allrev-network
+
+volumes:
+  filhos_data:
+
+networks:
+  allrev-project_allrev-network:
+    external: true

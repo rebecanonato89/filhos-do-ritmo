@@ -1,0 +1,137 @@
+import { DatabaseSync } from 'node:sqlite';
+
+export function openDb(file) {
+  const db = new DatabaseSync(file);
+  db.exec(`
+    PRAGMA journal_mode = WAL;
+    PRAGMA busy_timeout = 5000;
+
+    CREATE TABLE IF NOT EXISTS children (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      class_name    TEXT NOT NULL,
+      name          TEXT NOT NULL,
+      photo         TEXT,
+      gift_1        TEXT,
+      gift_2        TEXT,
+      gift_3        TEXT,
+      shirt_size    TEXT,
+      pants_size    TEXT,
+      shoe_size     TEXT,
+      sponsor_email TEXT,
+      sponsor_name  TEXT,
+      sponsor_phone TEXT,
+      sponsored_at  TEXT,
+      delivered     INTEGER NOT NULL DEFAULT 0,
+      delivered_at  TEXT,
+      UNIQUE (class_name, name)
+    );
+
+    CREATE TABLE IF NOT EXISTS users (
+      email       TEXT PRIMARY KEY,
+      google_name TEXT NOT NULL,
+      approved    INTEGER NOT NULL DEFAULT 0,
+      created_at  TEXT NOT NULL,
+      last_login  TEXT NOT NULL
+    );
+
+    -- Último nome/telefone informado pelo padrinho, para pré-preencher o próximo apadrinhamento.
+    CREATE TABLE IF NOT EXISTS sponsors (
+      email      TEXT PRIMARY KEY,
+      name       TEXT NOT NULL,
+      phone      TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+  return db;
+}
+
+const now = () => new Date().toISOString();
+
+export function listChildren(db) {
+  return db.prepare('SELECT * FROM children ORDER BY class_name COLLATE NOCASE, name COLLATE NOCASE').all();
+}
+
+export function getChild(db, id) {
+  return db.prepare('SELECT * FROM children WHERE id = ?').get(id);
+}
+
+export function getSponsor(db, email) {
+  return db.prepare('SELECT name, phone FROM sponsors WHERE email = ?').get(email);
+}
+
+/**
+ * Reserva atômica: o UPDATE só afeta a linha se ninguém apadrinhou antes.
+ * É isso (e não a tela) que impede duas pessoas de ficarem com a mesma criança.
+ */
+export function sponsorChild(db, id, { email, name, phone }) {
+  const ts = now();
+  const res = db
+    .prepare(
+      `UPDATE children
+          SET sponsor_email = ?, sponsor_name = ?, sponsor_phone = ?, sponsored_at = ?
+        WHERE id = ? AND sponsor_email IS NULL`,
+    )
+    .run(email, name, phone, ts, id);
+  if (res.changes === 1) {
+    db.prepare(
+      `INSERT INTO sponsors (email, name, phone, updated_at) VALUES (?, ?, ?, ?)
+       ON CONFLICT(email) DO UPDATE SET name = excluded.name, phone = excluded.phone, updated_at = excluded.updated_at`,
+    ).run(email, name, phone, ts);
+  }
+  return res.changes === 1;
+}
+
+export function releaseChild(db, id) {
+  return (
+    db
+      .prepare(
+        `UPDATE children
+            SET sponsor_email = NULL, sponsor_name = NULL, sponsor_phone = NULL,
+                sponsored_at = NULL, delivered = 0, delivered_at = NULL
+          WHERE id = ?`,
+      )
+      .run(id).changes === 1
+  );
+}
+
+export function setDelivered(db, id, delivered) {
+  return (
+    db
+      .prepare(
+        `UPDATE children SET delivered = ?, delivered_at = ?
+          WHERE id = ? AND sponsor_email IS NOT NULL`,
+      )
+      .run(delivered ? 1 : 0, delivered ? now() : null, id).changes === 1
+  );
+}
+
+/** Upsert por (turma, nome). Nunca toca nos campos de apadrinhamento/entrega. */
+export function upsertChild(db, c) {
+  db.prepare(
+    `INSERT INTO children (class_name, name, photo, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(class_name, name) DO UPDATE SET
+       photo = excluded.photo, gift_1 = excluded.gift_1, gift_2 = excluded.gift_2, gift_3 = excluded.gift_3,
+       shirt_size = excluded.shirt_size, pants_size = excluded.pants_size, shoe_size = excluded.shoe_size`,
+  ).run(c.class_name, c.name, c.photo, c.gift_1, c.gift_2, c.gift_3, c.shirt_size, c.pants_size, c.shoe_size);
+}
+
+export function recordLogin(db, { email, name }) {
+  const ts = now();
+  db.prepare(
+    `INSERT INTO users (email, google_name, approved, created_at, last_login) VALUES (?, ?, 0, ?, ?)
+     ON CONFLICT(email) DO UPDATE SET google_name = excluded.google_name, last_login = excluded.last_login`,
+  ).run(email, name, ts, ts);
+}
+
+export function isApproved(db, email) {
+  return db.prepare('SELECT approved FROM users WHERE email = ?').get(email)?.approved === 1;
+}
+
+export function listUsers(db) {
+  return db.prepare('SELECT email, google_name, approved, created_at, last_login FROM users ORDER BY approved, created_at DESC').all();
+}
+
+export function setApproved(db, email, approved) {
+  return db.prepare('UPDATE users SET approved = ? WHERE email = ?').run(approved ? 1 : 0, email).changes === 1;
+}
