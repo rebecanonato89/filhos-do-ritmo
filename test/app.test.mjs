@@ -179,3 +179,43 @@ test('normalizePhone', () => {
   assert.equal(normalizePhone('+55 35 3333-4444'), '3533334444');
   assert.equal(normalizePhone('9999-1234'), null);
 });
+
+test('gestor importa planilha CSV pelo Painel sem apagar apadrinhamento nem foto', async () => {
+  const csv = 'Turma;Nome;Idade;Pedido 1;Pedido 2;Pedido 3;Camisa;Calça;Tênis\nTurma 1;Ana;9;Boneca nova;Livro;Bola;10;10;31\nTurma 3;Carlos;7;Pipa;;;6;6;27\n';
+  const send = (cookie, body, type = 'text/csv') => fetch(`${base}/api/admin/import`, { method: 'POST', headers: { 'Content-Type': type, cookie }, body });
+  assert.equal((await send(alice, csv)).status, 403);
+  assert.equal((await send(admin, 'Nome;Idade\nX;1\n')).status, 400, 'sem coluna Turma');
+  const before = (await (await get('/api/children', admin)).json()).find((c) => c.name === 'Ana');
+  const r = await send(admin, csv);
+  assert.equal(r.status, 200);
+  assert.equal((await r.json()).count, 2);
+  const list = await (await get('/api/children', admin)).json();
+  const ana = list.find((c) => c.name === 'Ana');
+  assert.equal(ana.age, '9');
+  assert.deepEqual(ana.gifts, ['Boneca nova', 'Livro', 'Bola']);
+  assert.equal(ana.photo_url, before.photo_url, 'foto preservada');
+  assert.equal(ana.sponsor_name, before.sponsor_name, 'apadrinhamento preservado');
+  assert.ok(list.find((c) => c.name === 'Carlos'));
+});
+
+test('upload de imagem: só gestor, só JPEG, troca apaga o arquivo anterior', async () => {
+  const carlos = (await (await get('/api/children', admin)).json()).find((c) => c.name === 'Carlos');
+  const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(100)]);
+  const up = (cookie, body, kind = 'photo', type = 'image/jpeg') =>
+    fetch(`${base}/api/admin/children/${carlos.id}/image?kind=${kind}`, { method: 'POST', headers: { 'Content-Type': type, cookie }, body });
+
+  assert.equal((await up(alice, jpeg)).status, 403);
+  assert.equal((await up(admin, Buffer.from('<svg/>'), 'photo', 'image/jpeg')).status, 400);
+  assert.equal((await up(admin, jpeg, 'photo', 'image/svg+xml')).status, 415);
+
+  const first = await (await up(admin, jpeg)).json();
+  assert.equal((await get(first.url, admin)).status, 200);
+  const second = await (await up(admin, jpeg)).json();
+  assert.notEqual(first.url, second.url);
+  assert.equal((await get(first.url, admin)).status, 404, 'arquivo antigo removido');
+
+  const letter = await (await up(admin, jpeg, 'letter')).json();
+  const view = (await (await get('/api/children', alice)).json()).find((c) => c.id === carlos.id);
+  assert.equal(view.photo_url, second.url);
+  assert.equal(view.letter_photo_url, letter.url);
+});

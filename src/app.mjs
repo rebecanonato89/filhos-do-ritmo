@@ -1,4 +1,6 @@
-import { readFile, stat } from 'node:fs/promises';
+import { readFile, stat, writeFile, unlink } from 'node:fs/promises';
+import { randomBytes } from 'node:crypto';
+import { childrenFromCsv } from './csv.mjs';
 import { createReadStream } from 'node:fs';
 import { join, basename, extname } from 'node:path';
 import * as db_ from './db.mjs';
@@ -12,6 +14,7 @@ const STATIC = {
   '/styles.css': ['styles.css', 'text/css; charset=utf-8'],
   '/logo.jpg': ['logo.jpg', 'image/jpeg'],
   '/icon.png': ['icon.png', 'image/png'],
+  '/watermark.png': ['watermark.png', 'image/png'],
 };
 
 const PHOTO_TYPES = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
@@ -48,18 +51,23 @@ function redirect(res, location, setCookie = []) {
   send(res, 302, '', { Location: location, 'Set-Cookie': setCookie, 'Cache-Control': 'no-store' });
 }
 
-async function readJson(req) {
-  // Exigir JSON impede que um <form> de outro site dispare POST (CSRF), somado ao SameSite=Lax.
-  if (!(req.headers['content-type'] || '').startsWith('application/json')) throw new HttpError(415, 'Content-Type inválido');
+// Exigir um Content-Type que <form> não consegue enviar impede POST cross-site (CSRF), somado ao SameSite=Lax.
+async function readBody(req, type, limit) {
+  if (!(req.headers['content-type'] || '').startsWith(type)) throw new HttpError(415, 'Content-Type inválido');
   let size = 0;
   const chunks = [];
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 10_000) throw new HttpError(413, 'Requisição grande demais');
+    if (size > limit) throw new HttpError(413, 'Arquivo grande demais');
     chunks.push(chunk);
   }
+  return Buffer.concat(chunks);
+}
+
+async function readJson(req) {
+  const buf = await readBody(req, 'application/json', 10_000);
   try {
-    return JSON.parse(Buffer.concat(chunks).toString() || '{}');
+    return JSON.parse(buf.toString() || '{}');
   } catch {
     throw new HttpError(400, 'JSON inválido');
   }
@@ -93,6 +101,7 @@ function childView(c, user, isAdmin) {
     class_name: c.class_name,
     name: c.name,
     photo_url: c.photo ? `/photos/${encodeURIComponent(c.photo)}` : null,
+    letter_photo_url: c.letter_photo ? `/photos/${encodeURIComponent(c.letter_photo)}` : null,
     gifts: [c.gift_1, c.gift_2, c.gift_3].filter(Boolean),
     sizes: { shirt: c.shirt_size, pants: c.pants_size, shoe: c.shoe_size },
     letter: c.letter || null,
@@ -250,6 +259,44 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
       db_.releaseChild(db, id);
       console.log(`release child=${id} by=${admin.email} previous_sponsor=${before.sponsor_email}`);
       return json(res, 200, { ok: true });
+    }
+
+    if (method === 'POST' && path === '/api/admin/import') {
+      const admin = requireAdmin(req);
+      const text = (await readBody(req, 'text/csv', 2_000_000)).toString('utf8');
+      let children;
+      try {
+        children = childrenFromCsv(text);
+      } catch (err) {
+        throw new HttpError(400, err.message);
+      }
+      if (!children.length) throw new HttpError(400, 'Nenhuma criança encontrada na planilha');
+      db.exec('BEGIN');
+      try {
+        // Imagens chegam pelo upload do Painel; a planilha não aponta para arquivos.
+        for (const c of children) db_.upsertChild(db, { ...c, photo: null, letter_photo: null });
+        db.exec('COMMIT');
+      } catch (err) {
+        db.exec('ROLLBACK');
+        throw err;
+      }
+      console.log(`import rows=${children.length} by=${admin.email}`);
+      return json(res, 200, { count: children.length });
+    }
+
+    if (method === 'POST' && (m = path.match(/^\/api\/admin\/children\/(\d+)\/image$/))) {
+      requireAdmin(req);
+      const kind = url.searchParams.get('kind') === 'letter' ? 'letter_photo' : 'photo';
+      const id = Number(m[1]);
+      if (!db_.getChild(db, id)) throw new HttpError(404, 'Criança não encontrada');
+      const img = await readBody(req, 'image/jpeg', 4_000_000);
+      // O navegador já aplicou marca d'água e removeu EXIF; aqui só garantimos que é JPEG.
+      if (img.length < 4 || img[0] !== 0xff || img[1] !== 0xd8 || img[2] !== 0xff) throw new HttpError(400, 'Imagem inválida');
+      const file = `${kind === 'photo' ? 'child' : 'letter'}-${id}-${randomBytes(6).toString('hex')}.jpg`;
+      await writeFile(join(config.photosDir, file), img);
+      const old = db_.setChildImage(db, id, kind, file);
+      if (old) await unlink(join(config.photosDir, basename(old))).catch(() => {});
+      return json(res, 200, { url: `/photos/${file}` });
     }
 
     if (method === 'GET' && path === '/api/admin/users') {

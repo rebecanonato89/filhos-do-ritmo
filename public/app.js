@@ -50,7 +50,7 @@ function sizesLine(s) {
 
 function card(c) {
   const photo = c.photo_url
-    ? h('button', { type: 'button', class: 'photo', onclick: () => openPhoto(c) }, h('img', { src: c.photo_url, alt: `Cartinha de ${c.name}`, loading: 'lazy' }), h('span', { class: 'zoom' }, '🔍 Ver cartinha'))
+    ? h('button', { type: 'button', class: 'photo', onclick: () => openImage(c, 'photo') }, h('img', { src: c.photo_url, alt: `Foto de ${c.name}`, loading: 'lazy' }))
     : h('div', { class: 'photo placeholder' }, '🎁');
 
   let footer;
@@ -69,7 +69,8 @@ function card(c) {
     h('div', { class: 'card-body' },
       h('h3', {}, c.name),
       h('p', { class: 'muted small' }, [c.age && `${c.age} anos`, c.class_name].filter(Boolean).join(' · ')),
-      c.letter ? h('button', { type: 'button', class: 'letter', onclick: () => openPhoto(c) }, h('span', {}, `“${c.letter}”`), h('em', {}, 'Ler cartinha')) : null,
+      c.letter_photo_url ? h('button', { type: 'button', class: 'letter-btn', onclick: () => openImage(c, 'letter') }, '✉️ Ver cartinha') : null,
+      c.letter ? h('p', { class: 'letter-text' }, `“${c.letter}”`) : null,
       c.gifts.length ? h('p', { class: 'label' }, '3 opções de presente') : null,
       h('ol', { class: 'gifts' }, c.gifts.map((g) => h('li', {}, g))),
       sizesLine(c.sizes),
@@ -107,14 +108,15 @@ function renderSponsor() {
   );
 }
 
-function openPhoto(c) {
-  $('photoBig').hidden = !c.photo_url;
-  if (c.photo_url) $('photoBig').src = c.photo_url;
-  $('photoBig').alt = `Foto de ${c.name}`;
-  $('photoName').textContent = c.age ? `${c.name}, ${c.age} anos` : c.name;
-  $('photoLetter').textContent = c.letter || '';
-  $('photoLetter').hidden = !c.letter;
-  $('photoDialog').showModal();
+function openImage(c, which) {
+  const src = which === 'letter' ? c.letter_photo_url : c.photo_url;
+  $('photoBig').src = src;
+  $('photoBig').alt = which === 'letter' ? `Cartinha de ${c.name}` : `Foto de ${c.name}`;
+  $('photoName').textContent = (which === 'letter' ? 'Cartinha de ' : '') + (c.age ? `${c.name}, ${c.age} anos` : c.name);
+  $('photoSwitch').hidden = !(c.photo_url && c.letter_photo_url);
+  $('photoSwitch').textContent = which === 'letter' ? '📷 Ver foto' : '✉️ Ver cartinha';
+  $('photoSwitch').onclick = () => openImage(c, which === 'letter' ? 'photo' : 'letter');
+  if (!$('photoDialog').open) $('photoDialog').showModal();
 }
 
 function openSponsor(c) {
@@ -185,6 +187,10 @@ function renderAdmin() {
       h('tr', { class: c.status },
         h('td', {}, c.class_name),
         h('td', {}, c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age})`) : ''),
+        h('td', { class: 'nowrap' },
+          h('button', { type: 'button', class: `img-btn${c.photo_url ? ' has' : ''}`, title: 'Enviar foto da criança', onclick: () => pickOne(c, 'photo') }, '📷'),
+          h('button', { type: 'button', class: `img-btn${c.letter_photo_url ? ' has' : ''}`, title: 'Enviar foto da cartinha', onclick: () => pickOne(c, 'letter') }, '✉️'),
+        ),
         h('td', {}, c.sponsor_name ? [c.sponsor_name, h('br'), h('span', { class: 'muted small' }, c.sponsor_email)] : h('span', { class: 'muted' }, 'Disponível')),
         h('td', {}, c.sponsor_phone_digits
           ? h('a', { href: `https://wa.me/55${c.sponsor_phone_digits}`, target: '_blank', rel: 'noopener' }, c.sponsor_phone)
@@ -248,6 +254,121 @@ async function approve(u, approved) {
   await loadUsers();
 }
 
+// ---------- Carga de dados (gestor) ----------
+
+const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+let watermarkImg;
+
+function loadWatermark() {
+  watermarkImg ??= new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = '/watermark.png';
+  });
+  return watermarkImg;
+}
+
+/**
+ * Aplica a marca d'água no navegador e devolve um JPEG novo. Redesenhar no canvas também
+ * descarta o EXIF (GPS), e o arquivo original nunca sai do computador de quem envia.
+ */
+async function watermark(file, kind) {
+  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  const max = kind === 'letter' ? 1600 : 1000; // cartinha precisa de resolução para ler a letra
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const w = Math.round(bmp.width * scale), hgt = Math.round(bmp.height * scale);
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = hgt;
+  const ctx = cv.getContext('2d');
+  ctx.drawImage(bmp, 0, 0, w, hgt);
+  const logo = await loadWatermark();
+  ctx.shadowColor = 'rgba(0,0,0,.6)';
+  ctx.shadowBlur = Math.max(4, w / 150);
+  if (kind === 'letter') {
+    // Grade suave: protege a foto colada sem atrapalhar a leitura dos pedidos.
+    const size = Math.min(w, hgt) / 3;
+    ctx.globalAlpha = 0.16;
+    for (let y = size * 0.2; y < hgt; y += size * 1.3) for (let x = size * 0.1; x < w; x += size * 1.3) ctx.drawImage(logo, x, y, size, size);
+  } else {
+    const size = Math.min(w, hgt) * 0.5;
+    ctx.globalAlpha = 0.45;
+    ctx.drawImage(logo, (w - size) / 2, (hgt - size) / 2, size, size);
+  }
+  return new Promise((resolve) => cv.toBlob(resolve, 'image/jpeg', 0.85));
+}
+
+async function uploadImage(c, kind, file) {
+  const blob = await watermark(file, kind);
+  const res = await fetch(`/api/admin/children/${c.id}/image?kind=${kind}`, { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Falha no envio');
+}
+
+function pickOne(c, kind) {
+  const input = h('input', { type: 'file', accept: 'image/*' });
+  input.onchange = async () => {
+    if (!input.files[0]) return;
+    try {
+      await uploadImage(c, kind, input.files[0]);
+      toast(`${kind === 'letter' ? 'Cartinha' : 'Foto'} de ${c.name} enviada com marca d'água`);
+    } catch (err) {
+      toast(err.message);
+    }
+    await refresh();
+  };
+  input.click();
+}
+
+function logLine(text, cls = '') {
+  $('uploadLog').hidden = false;
+  $('uploadLog').append(h('li', { class: cls }, text));
+}
+
+async function importCsv(file) {
+  $('uploadLog').replaceChildren();
+  const buf = await file.arrayBuffer();
+  let text;
+  try {
+    text = new TextDecoder('utf-8', { fatal: true }).decode(buf);
+  } catch {
+    text = new TextDecoder('windows-1252').decode(buf); // CSV salvo pelo Excel em português
+  }
+  try {
+    const r = await fetch('/api/admin/import', { method: 'POST', headers: { 'Content-Type': 'text/csv; charset=utf-8' }, body: text });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+    logLine(`✅ Planilha importada: ${data.count} crianças.`, 'ok');
+  } catch (err) {
+    logLine(`❌ ${err.message}`, 'fail');
+  }
+  await refresh();
+}
+
+async function bulkUpload(files, kind) {
+  $('uploadLog').replaceChildren();
+  const byName = new Map();
+  for (const c of state.children) {
+    const k = norm(c.name);
+    byName.set(k, byName.has(k) ? null : c); // null = nome repetido, não dá para casar com segurança
+  }
+  let ok = 0;
+  for (const file of files) {
+    const k = norm(file.name.replace(/\.[^.]+$/, ''));
+    const c = byName.get(k);
+    if (c === undefined) { logLine(`⚠️ ${file.name}: nenhuma criança com esse nome`, 'fail'); continue; }
+    if (c === null) { logLine(`⚠️ ${file.name}: nome repetido em mais de uma turma — envie pelo ícone na linha`, 'fail'); continue; }
+    try {
+      await uploadImage(c, kind, file);
+      ok++;
+      logLine(`✅ ${file.name} → ${c.name}`, 'ok');
+    } catch (err) {
+      logLine(`❌ ${file.name}: ${err.message}`, 'fail');
+    }
+  }
+  logLine(`${ok} de ${files.length} enviadas.`);
+  await refresh();
+}
+
 // ---------- Ciclo ----------
 
 function render() {
@@ -298,6 +419,10 @@ document.addEventListener('DOMContentLoaded', () => {
   $('sponsorForm').addEventListener('submit', submitSponsor);
   $('dlgCancel').addEventListener('click', () => $('sponsorDialog').close());
   $('photoClose').addEventListener('click', () => $('photoDialog').close());
+  $('csvInput').addEventListener('change', (e) => e.target.files[0] && importCsv(e.target.files[0]).finally(() => (e.target.value = '')));
+  for (const [id, kind] of [['photoInput', 'photo'], ['letterInput', 'letter']]) {
+    $(id).addEventListener('change', (e) => bulkUpload([...e.target.files], kind).finally(() => (e.target.value = '')));
+  }
   $('onlyAvailable').addEventListener('change', renderSponsor);
   for (const id of ['adminFilter', 'adminClass']) $(id).addEventListener('change', renderAdmin);
   $('adminSearch').addEventListener('input', renderAdmin);
