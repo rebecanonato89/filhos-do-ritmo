@@ -1,5 +1,5 @@
 // Uso: npm run import -- planilha.csv
-// Colunas (cabeçalho, ordem livre, ; ou ,): turma, nome, foto, pedido1, pedido2, pedido3, camisa, calca, sapato
+// Colunas (cabeçalho, ordem livre, ; ou ,): turma, nome, foto, pedido1, pedido2, pedido3, camisa, calca, sapato, cartinha
 // Reexecutar é seguro: atualiza por (turma, nome) e nunca mexe em padrinho/entrega.
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -42,6 +42,7 @@ const ALIASES = {
   gift_1: ['pedido1', 'presente1', 'opcao1'], gift_2: ['pedido2', 'presente2', 'opcao2'], gift_3: ['pedido3', 'presente3', 'opcao3'],
   shirt_size: ['camisa', 'tamcamisa', 'tamanhocamisa'], pants_size: ['calca', 'tamcalca', 'tamanhocalca'],
   shoe_size: ['sapato', 'tamsapato', 'tamanhosapato', 'calcado'],
+  letter: ['cartinha', 'texto', 'textodacartinha', 'mensagem'],
 };
 
 const [header, ...rows] = parseCsv(readFileSync(file, 'utf8'));

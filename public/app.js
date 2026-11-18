@@ -69,6 +69,7 @@ function card(c) {
     h('div', { class: 'card-body' },
       h('h3', {}, c.name),
       h('p', { class: 'muted small' }, c.class_name),
+      c.letter ? h('button', { type: 'button', class: 'letter', onclick: () => openPhoto(c) }, h('span', {}, `“${c.letter}”`), h('em', {}, 'Ler cartinha')) : null,
       c.gifts.length ? h('p', { class: 'label' }, '3 opções de presente') : null,
       h('ol', { class: 'gifts' }, c.gifts.map((g) => h('li', {}, g))),
       sizesLine(c.sizes),
@@ -107,8 +108,12 @@ function renderSponsor() {
 }
 
 function openPhoto(c) {
-  $('photoBig').src = c.photo_url;
+  $('photoBig').hidden = !c.photo_url;
+  if (c.photo_url) $('photoBig').src = c.photo_url;
   $('photoBig').alt = `Foto de ${c.name}`;
+  $('photoName').textContent = c.name;
+  $('photoLetter').textContent = c.letter || '';
+  $('photoLetter').hidden = !c.letter;
   $('photoDialog').showModal();
 }
 

@@ -17,6 +17,7 @@ export function openDb(file) {
       shirt_size    TEXT,
       pants_size    TEXT,
       shoe_size     TEXT,
+      letter        TEXT,
       sponsor_email TEXT,
       sponsor_name  TEXT,
       sponsor_phone TEXT,
@@ -42,6 +43,9 @@ export function openDb(file) {
       updated_at TEXT NOT NULL
     );
   `);
+  // Banco de produção criado antes da coluna da cartinha existir.
+  const cols = db.prepare('PRAGMA table_info(children)').all().map((c) => c.name);
+  if (!cols.includes('letter')) db.exec('ALTER TABLE children ADD COLUMN letter TEXT');
   return db;
 }
 
@@ -108,12 +112,15 @@ export function setDelivered(db, id, delivered) {
 /** Upsert por (turma, nome). Nunca toca nos campos de apadrinhamento/entrega. */
 export function upsertChild(db, c) {
   db.prepare(
-    `INSERT INTO children (class_name, name, photo, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO children (class_name, name, photo, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size, letter)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(class_name, name) DO UPDATE SET
        photo = excluded.photo, gift_1 = excluded.gift_1, gift_2 = excluded.gift_2, gift_3 = excluded.gift_3,
-       shirt_size = excluded.shirt_size, pants_size = excluded.pants_size, shoe_size = excluded.shoe_size`,
-  ).run(c.class_name, c.name, c.photo, c.gift_1, c.gift_2, c.gift_3, c.shirt_size, c.pants_size, c.shoe_size);
+       shirt_size = excluded.shirt_size, pants_size = excluded.pants_size, shoe_size = excluded.shoe_size,
+       letter = excluded.letter`,
+  ).run(
+    ...['class_name', 'name', 'photo', 'gift_1', 'gift_2', 'gift_3', 'shirt_size', 'pants_size', 'shoe_size', 'letter'].map((k) => c[k] ?? null),
+  );
 }
 
 export function recordLogin(db, { email, name }) {
@@ -134,4 +141,9 @@ export function listUsers(db) {
 
 export function setApproved(db, email, approved) {
   return db.prepare('UPDATE users SET approved = ? WHERE email = ?').run(approved ? 1 : 0, email).changes === 1;
+}
+
+/** Remove só as crianças de exemplo (fotos com prefixo demo-). */
+export function deleteDemoChildren(db) {
+  return db.prepare("DELETE FROM children WHERE photo LIKE 'demo-%'").run().changes;
 }

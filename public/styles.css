@@ -100,6 +100,12 @@ main { max-width: 1100px; margin: 0 auto; padding: 16px; }
 .badge.taken { background: #ececec; color: var(--muted); }
 .badge.mine { background: #fff1e5; color: var(--orange-dark); }
 
+/* Cartinha */
+.letter { display: block; text-align: left; background: #fff8f1; border: 1px dashed #f0c49c; border-radius: 10px; padding: 8px 10px; margin: 8px 0 0; font: inherit; color: var(--ink); cursor: pointer; width: 100%; }
+.letter span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-style: italic; font-size: .9rem; }
+.letter em { display: block; font-style: normal; font-size: .8rem; font-weight: 600; color: var(--orange-dark); margin-top: 4px; }
+.letter-full { white-space: pre-line; font-style: italic; text-align: left; background: #fff8f1; border-radius: 10px; padding: 12px; }
+
 /* Painel */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
 .stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; }
