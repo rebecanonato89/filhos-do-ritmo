@@ -43,15 +43,16 @@ const formatDate = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { dateS
 
 // ---------- Padrinho ----------
 
-function sizesLine(s) {
-  const parts = [s.shirt && `Camisa ${s.shirt}`, s.pants && `Calça ${s.pants}`, s.shoe && `Tênis ${s.shoe}`].filter(Boolean);
-  return parts.length ? h('p', { class: 'sizes' }, '👕 ', parts.join(' · ')) : null;
+// Card no formato da cartinha impressa do Natal Solidário.
+function field(value, cls = '') {
+  return h('span', { class: `lc-field hand ${cls}` }, value || ' ');
 }
 
 function card(c) {
   const photo = c.photo_url
-    ? h('button', { type: 'button', class: 'photo', onclick: () => openImage(c, 'photo') }, h('img', { src: c.photo_url, alt: `Foto de ${c.name}`, loading: 'lazy' }))
-    : h('div', { class: 'photo placeholder' }, '🎁');
+    ? h('button', { type: 'button', class: 'polaroid-img', onclick: () => openImage(c, 'photo'), 'aria-label': `Ampliar foto de ${c.name}` },
+        h('img', { src: c.photo_url, alt: `Foto de ${c.name}`, loading: 'lazy' }))
+    : h('div', { class: 'polaroid-img empty' }, '🎁');
 
   let footer;
   if (c.mine) {
@@ -59,23 +60,39 @@ function card(c) {
   } else if (c.status === 'sponsored') {
     footer = h('div', { class: 'badge taken' }, 'Já apadrinhada');
   } else {
-    footer = h('button', { type: 'button', class: 'btn', onclick: () => openSponsor(c) }, 'Apadrinhar');
+    footer = h('button', { type: 'button', class: 'btn', onclick: () => openSponsor(c) }, '🎁 Apadrinhar');
   }
+
+  const sizes = [['👕', 'Camiseta', c.sizes.shirt], ['👖', 'Calça', c.sizes.pants], ['👟', 'Tênis', c.sizes.shoe]];
 
   return h(
     'article',
-    { class: `card ${c.status}${c.mine ? ' is-mine' : ''}` },
-    photo,
-    h('div', { class: 'card-body' },
-      h('h3', {}, c.name),
-      h('p', { class: 'muted small' }, [c.age && `${c.age} anos`, c.class_name].filter(Boolean).join(' · ')),
-      c.letter_photo_url ? h('button', { type: 'button', class: 'letter-btn', onclick: () => openImage(c, 'letter') }, '✉️ Ver cartinha') : null,
-      c.letter ? h('p', { class: 'letter-text' }, `“${c.letter}”`) : null,
-      c.gifts.length ? h('p', { class: 'label' }, '3 opções de presente') : null,
-      h('ol', { class: 'gifts' }, c.gifts.map((g) => h('li', {}, g))),
-      sizesLine(c.sizes),
-      footer,
+    { class: `card letter-card ${c.status}${c.mine ? ' is-mine' : ''}` },
+    h('div', { class: 'lc-head' },
+      h('span', { class: 'lc-class' }, c.class_name),
+      c.letter_photo_url
+        ? h('button', { type: 'button', class: 'envelope', onclick: () => openImage(c, 'letter'), title: 'Ver a cartinha original' }, h('span', { 'aria-hidden': 'true' }, '✉️'), ' Ver cartinha')
+        : null,
     ),
+    h('p', { class: 'lc-dear' }, 'Querido Papai Noel...'),
+    h('div', { class: 'lc-top' },
+      h('figure', { class: 'polaroid' }, photo, h('figcaption', {}, 'Minha foto')),
+      h('div', { class: 'lc-id' },
+        h('span', { class: 'lc-label' }, 'Meu nome é:'),
+        field(c.name, 'lc-name'),
+        h('span', { class: 'lc-label' }, 'Eu tenho ', field(c.age, 'lc-age'), ' anos.'),
+      ),
+    ),
+    h('p', { class: 'lc-q' }, 'Neste Natal, eu gostaria de ganhar:'),
+    h('ol', { class: 'lc-wishes' }, c.gifts.map((g) => h('li', {}, field(g)))),
+    c.letter ? h('p', { class: 'lc-free hand' }, `“${c.letter}”`) : null,
+    sizes.some(([, , v]) => v)
+      ? h('div', { class: 'lc-sizes' },
+          h('p', { class: 'lc-sizes-title' }, 'Meus tamanhos'),
+          h('div', { class: 'lc-sizes-row' }, sizes.map(([icon, label, v]) =>
+            h('span', { class: 'lc-size' }, h('span', { 'aria-hidden': 'true' }, icon), ` ${label} `, field(v, 'lc-box'))))) 
+      : null,
+    h('div', { class: 'lc-footer' }, footer),
   );
 }
 
