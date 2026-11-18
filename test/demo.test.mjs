@@ -13,7 +13,7 @@ const run = (dataDir, action) =>
     encoding: 'utf8',
   });
 
-test('demo seed cria 10 com cartinha e clear remove só as de exemplo', () => {
+test('demo seed cria 10 com idade e clear remove só as de exemplo', () => {
   const dir = mkdtempSync(join(tmpdir(), 'fdr-demo-'));
   const db = openDb(join(dir, 'app.db'));
   upsertChild(db, { class_name: 'Turma 1', name: 'Real', photo: 'real.jpg', gift_1: 'Bola' });
@@ -22,7 +22,7 @@ test('demo seed cria 10 com cartinha e clear remove só as de exemplo', () => {
   run(dir, 'seed'); // idempotente
   let all = listChildren(db);
   assert.equal(all.length, 11);
-  assert.ok(all.filter((c) => c.photo?.startsWith('demo-')).every((c) => c.letter && c.gift_1));
+  assert.ok(all.filter((c) => c.photo?.startsWith('demo-')).every((c) => c.age && c.gift_1 && c.shoe_size));
   assert.equal(readdirSync(join(dir, 'photos')).filter((f) => f.startsWith('demo-')).length, 10);
 
   sponsorChild(db, all.find((c) => c.name === 'Davi').id, { email: 'a@b.com', name: 'Teste', phone: '35999999999' });
@@ -44,4 +44,15 @@ test('banco antigo sem coluna letter é migrado ao abrir', () => {
   const db = openDb(file);
   upsertChild(db, { class_name: 'T', name: 'Antiga', letter: 'Oi' });
   assert.equal(listChildren(db)[0].letter, 'Oi');
+});
+
+test('banco antigo ganha a coluna age ao abrir', () => {
+  const file = join(mkdtempSync(join(tmpdir(), 'fdr-age-')), 'app.db');
+  openDb(file).close();
+  const raw = new DatabaseSync(file);
+  raw.exec('ALTER TABLE children DROP COLUMN age');
+  raw.close();
+  const db = openDb(file);
+  upsertChild(db, { class_name: 'T', name: 'X', age: '8' });
+  assert.equal(listChildren(db)[0].age, '8');
 });

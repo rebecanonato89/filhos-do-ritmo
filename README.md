@@ -43,7 +43,7 @@ Push na `main`: testes, imagem no Docker Hub, deploy em `~/filhos-do-ritmo` na V
    ```bash
    python3 scripts/prepare_photos.py fotos-originais/ fotos/
    ```
-2. A planilha deve ser salva como **CSV**, com cabeçalho `Turma;Nome;Foto;Pedido 1;Pedido 2;Pedido 3;Camisa;Calça;Sapato;Cartinha` (`Cartinha` = texto escrito pela criança, opcional). A coluna `Foto` traz o nome do arquivo (ex.: `ana-souza.jpg`).
+2. A planilha deve ser salva como **CSV**, com cabeçalho `Turma;Nome;Idade;Foto;Pedido 1;Pedido 2;Pedido 3;Camisa;Calça;Tênis` (os campos digitados da cartinha). A coluna `Foto` traz o nome do arquivo da **foto da cartinha inteira** (ex.: `ana-souza.jpg`). É ela que o padrinho vê no card. A coluna opcional `Cartinha` aceita um texto livre, se houver.
 3. Na VPS:
    ```bash
    docker cp fotos/. filhos_do_ritmo:/data/photos/
@@ -54,7 +54,7 @@ Push na `main`: testes, imagem no Docker Hub, deploy em `~/filhos-do-ritmo` na V
 
 ## Dados de exemplo
 Use para testar antes das cartinhas reais. No GitHub, vá em **Actions → Dados de exemplo → Run workflow** e escolha:
-- `seed`: cria 10 crianças fictícias (ilustrações marcadas "EXEMPLO", Turma Exemplo A/B), com cartinha.
+- `seed`: cria 10 cartinhas fictícias no layout real (ilustração no lugar da foto, faixa "EXEMPLO · NÃO É CRIANÇA REAL", Turma Exemplo A/B).
 - `clear`: apaga **só** as de exemplo, inclusive apadrinhamentos de teste. As crianças reais não são tocadas.
 
 **Rode `clear` antes de divulgar o link aos padrinhos.**

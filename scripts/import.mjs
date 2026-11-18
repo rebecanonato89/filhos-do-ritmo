@@ -1,5 +1,5 @@
 // Uso: npm run import -- planilha.csv
-// Colunas (cabeçalho, ordem livre, ; ou ,): turma, nome, foto, pedido1, pedido2, pedido3, camisa, calca, sapato, cartinha
+// Colunas (cabeçalho, ordem livre, ; ou ,): turma, nome, foto, pedido1, pedido2, pedido3, idade, camisa, calca, tenis, cartinha
 // Reexecutar é seguro: atualiza por (turma, nome) e nunca mexe em padrinho/entrega.
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -41,7 +41,8 @@ const ALIASES = {
   class_name: ['turma'], name: ['nome', 'nomedacrianca', 'crianca'], photo: ['foto', 'arquivofoto'],
   gift_1: ['pedido1', 'presente1', 'opcao1'], gift_2: ['pedido2', 'presente2', 'opcao2'], gift_3: ['pedido3', 'presente3', 'opcao3'],
   shirt_size: ['camisa', 'tamcamisa', 'tamanhocamisa'], pants_size: ['calca', 'tamcalca', 'tamanhocalca'],
-  shoe_size: ['sapato', 'tamsapato', 'tamanhosapato', 'calcado'],
+  shoe_size: ['sapato', 'tamsapato', 'tamanhosapato', 'calcado', 'tenis', 'tamtenis', 'tamanhotenis'],
+  age: ['idade', 'anos'],
   letter: ['cartinha', 'texto', 'textodacartinha', 'mensagem'],
 };
 
