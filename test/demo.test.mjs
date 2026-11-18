@@ -44,7 +44,7 @@ test('banco antigo sem coluna letter é migrado ao abrir', () => {
   old.close();
   const db = openDb(file);
   upsertChild(db, { class_name: 'T', name: 'Antiga', age: '9' });
-  assert.equal(listChildren(db)[0].age, '9');
+  assert.equal(listChildren(db)[0].age, '09');
 });
 
 test('banco antigo ganha a coluna age ao abrir', () => {
@@ -55,5 +55,15 @@ test('banco antigo ganha a coluna age ao abrir', () => {
   raw.close();
   const db = openDb(file);
   upsertChild(db, { class_name: 'T', name: 'X', age: '8' });
-  assert.equal(listChildren(db)[0].age, '8');
+  assert.equal(listChildren(db)[0].age, '08');
+});
+
+test('dados antigos com 1 dígito são padronizados ao abrir o banco', () => {
+  const file = join(mkdtempSync(join(tmpdir(), 'fdr-pad-')), 'app.db');
+  const db1 = openDb(file);
+  db1.prepare("INSERT INTO children (class_name, name, age, shirt_size) VALUES ('T', 'Antigo', '5', '6')").run();
+  db1.close();
+  const c = listChildren(openDb(file))[0];
+  assert.equal(c.age, '05');
+  assert.equal(c.shirt_size, '06');
 });

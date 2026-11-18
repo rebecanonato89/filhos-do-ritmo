@@ -26,8 +26,8 @@ test('montador gera planilha importável, renomeia arquivos e tira [?]', () => {
   const r = run(root);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const csv = readFileSync(join(root, '_saida', 'planilha.csv'), 'utf8');
-  assert.match(csv, /^﻿Turma;Nome;Idade;Pedido 1;Pedido 2;Pedido 3;Camisa;Calça;Tênis\r\n/);
-  assert.match(csv, /Turma 1;Davi Gonçalves;8;Squishy;;;8;8;30/);
+  assert.match(csv, /^﻿Turma;Nome;Idade;Sexo;Pedido 1;Pedido 2;Pedido 3;Camisa;Calça;Tênis\r\n/);
+  assert.match(csv, /Turma 1;Davi Gonçalves;8;;Squishy;;;8;8;30/);
   assert.deepEqual(readdirSync(join(root, '_saida', 'fotos')), ['Davi Gonçalves.jpg']);
   assert.deepEqual(readdirSync(join(root, '_saida', 'cartinhas')), ['Davi Gonçalves.jpg']);
   assert.match(readFileSync(join(root, '_saida', 'revisao.html'), 'utf8'), /1 com itens em laranja/);

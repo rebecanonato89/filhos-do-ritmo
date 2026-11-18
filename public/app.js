@@ -92,6 +92,7 @@ function card(c) {
         h('span', { class: 'lc-label' }, 'Meu nome é:'),
         field(c.name, 'lc-name'),
         h('span', { class: 'lc-label' }, 'Eu tenho ', field(c.age, 'lc-age'), ' anos.'),
+        c.gender ? h('span', { class: `gender-tag g-${c.gender}` }, c.gender === 'F' ? '👧 Menina' : '👦 Menino') : null,
       ),
     ),
     h('p', { class: 'lc-q' }, 'Neste Natal, eu gostaria de ganhar:'),
@@ -124,7 +125,18 @@ function renderSponsor() {
   );
 
   const onlyAvailable = $('onlyAvailable').checked;
-  const visible = state.children.filter((c) => (!state.classFilter || c.class_name === state.classFilter) && (!onlyAvailable || c.status === 'available'));
+  const [ageMin, ageMax] = ($('ageFilter').value || '0-999').split('-').map(Number);
+  const gender = $('genderFilter').value;
+  const visible = state.children.filter((c) => {
+    if (state.classFilter && c.class_name !== state.classFilter) return false;
+    if (onlyAvailable && c.status !== 'available') return false;
+    if ($('ageFilter').value) {
+      const age = parseInt(c.age, 10);
+      if (!(age >= ageMin && age <= ageMax)) return false;
+    }
+    if (gender && c.gender !== gender) return false;
+    return true;
+  });
   const available = state.children.filter((c) => c.status === 'available').length;
   $('counter').textContent = state.children.length
     ? `${available} de ${state.children.length} crianças ainda esperando um padrinho`
@@ -136,7 +148,10 @@ function renderSponsor() {
     groups.get(c.class_name).push(c);
   }
   $('classes').replaceChildren(
-    ...[...groups].map(([cl, list]) => h('section', { class: 'class-group', vars: classColor(cl) }, h('h2', {}, cl, h('span', { class: 'class-count' }, ` · ${list.length}`)), h('div', { class: 'grid' }, list.map(card)))),
+    ...[...groups].map(([cl, list]) => h('section', { class: 'class-group', vars: classColor(cl) },
+      h('h2', { class: 'class-band' }, h('span', {}, cl),
+        h('span', { class: 'class-count' }, `${list.length} ${list.length === 1 ? 'criança' : 'crianças'} · ${list.filter((c) => c.status === 'available').length} disponíveis`)),
+      h('div', { class: 'grid' }, list.map(card)))),
   );
 }
 
@@ -221,7 +236,7 @@ function renderAdmin() {
         h('td', { 'data-label': 'Turma' }, h('span', { class: 'class-pill', vars: classColor(c.class_name) }, c.class_name)),
         h('td', { 'data-label': 'Criança', class: 'cell-title' },
           h('button', { type: 'button', class: 'pencil pencil-sm', onclick: () => openEdit(c), 'data-tip': 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, '✏️'),
-          c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age})`) : ''),
+          c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age}${c.gender ? `, ${c.gender === 'F' ? 'menina' : 'menino'}` : ''})`) : ''),
         h('td', { class: 'nowrap', 'data-label': 'Imagens' },
           h('button', { type: 'button', class: `img-btn${c.photo_url ? ' has' : ''}`, 'data-tip': c.photo_url ? 'Trocar foto da criança' : 'Adicionar foto da criança', 'aria-label': c.photo_url ? 'Trocar foto da criança' : 'Adicionar foto da criança', onclick: () => pickOne(c, 'photo') }, '📷', h('span', {}, c.photo_url ? '✓' : '+')),
           h('button', { type: 'button', class: `img-btn${c.letter_photo_url ? ' has' : ''}`, 'data-tip': c.letter_photo_url ? 'Trocar cartinha' : 'Adicionar cartinha', 'aria-label': c.letter_photo_url ? 'Trocar cartinha' : 'Adicionar cartinha', onclick: () => pickOne(c, 'letter') }, '✉️', h('span', {}, c.letter_photo_url ? '✓' : '+')),
@@ -355,7 +370,7 @@ async function uploadImage(c, kind, file) {
 }
 
 const EDIT_FIELDS = [
-  ['class_name', 'Turma'], ['name', 'Nome'], ['age', 'Idade'],
+  ['class_name', 'Turma'], ['name', 'Nome'], ['age', 'Idade'], ['gender', 'Menina ou menino'],
   ['gift_1', 'Pedido 1'], ['gift_2', 'Pedido 2'], ['gift_3', 'Pedido 3'],
   ['shirt_size', 'Camiseta'], ['pants_size', 'Calça'], ['shoe_size', 'Tênis'],
 ];
@@ -364,16 +379,22 @@ function openEdit(c) {
   // c = null → nova criança; as imagens entram depois de salvar (precisam de um id).
   state.editing = c;
   const values = c ? {
-    class_name: c.class_name, name: c.name, age: c.age,
+    class_name: c.class_name, name: c.name, age: c.age, gender: c.gender,
     gift_1: c.gifts[0], gift_2: c.gifts[1], gift_3: c.gifts[2],
     shirt_size: c.sizes.shirt, pants_size: c.sizes.pants, shoe_size: c.sizes.shoe,
   } : { class_name: $('adminClass')?.value || '' };
   $('editTitle').textContent = c ? `Editar ${c.name}` : 'Nova criança';
   $('editImages').hidden = !c;
   $('editNewHint').hidden = !!c;
-  $('editFields').replaceChildren(...EDIT_FIELDS.map(([k, label]) =>
-    h('label', { class: k.endsWith('size') || k === 'age' ? 'short' : '' }, label,
-      h('input', { name: k, value: values[k] || '', maxlength: '120', required: k === 'class_name' || k === 'name' }))));
+  $('editFields').replaceChildren(...EDIT_FIELDS.map(([k, label]) => {
+    if (k === 'gender') {
+      const sel = h('select', { name: 'gender' }, h('option', { value: '' }, '—'), h('option', { value: 'F' }, '👧 Menina'), h('option', { value: 'M' }, '👦 Menino'));
+      sel.value = values.gender || '';
+      return h('label', { class: 'short wide2' }, label, sel);
+    }
+    return h('label', { class: k.endsWith('size') || k === 'age' ? 'short' : '' }, label,
+      h('input', { name: k, value: values[k] || '', maxlength: '120', required: k === 'class_name' || k === 'name' }));
+  }));
   $('editPhoto').onclick = () => pickOne(c, 'photo');
   $('editLetter').onclick = () => pickOne(c, 'letter');
   $('editError').hidden = true;
@@ -549,7 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
   for (const [id, kind] of [['photoInput', 'photo'], ['letterInput', 'letter']]) {
     $(id).addEventListener('change', (e) => bulkUpload([...e.target.files], kind).finally(() => (e.target.value = '')));
   }
-  $('onlyAvailable').addEventListener('change', renderSponsor);
+  for (const id of ['onlyAvailable', 'ageFilter', 'genderFilter']) $(id).addEventListener('change', renderSponsor);
   for (const id of ['adminFilter', 'adminClass']) $(id).addEventListener('change', renderAdmin);
   $('adminSearch').addEventListener('input', renderAdmin);
   $('recheckBtn').addEventListener('click', () => location.reload());

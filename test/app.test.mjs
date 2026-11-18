@@ -100,7 +100,7 @@ test('path traversal em fotos não escapa da pasta', async () => {
 test('apadrinhar: valida dados, bloqueia segundo padrinho e esconde dados de terceiros', async () => {
   const ana = (await (await get('/api/children', alice)).json()).find((c) => c.name === 'Ana');
   assert.ok(!('letter' in ana), 'cartinha não tem texto livre')
-  assert.equal(ana.age, '8');
+  assert.equal(ana.age, '08');
 
   assert.equal((await post(`/api/children/${ana.id}/sponsor`, alice, { name: 'Al', phone: '35999999999' })).status, 400);
   assert.equal((await post(`/api/children/${ana.id}/sponsor`, alice, { name: 'Alice Souza', phone: '123' })).status, 400);
@@ -146,8 +146,8 @@ test('gestor: entrega, liberação e exportação; padrinho não acessa', async 
 
   assert.equal((await get('/api/admin/export.csv', alice)).status, 403);
   const csv = await (await get('/api/admin/export.csv', admin)).text();
-  assert.match(csv, /Turma;Criança;Idade;.*;Tênis;/);
-  assert.match(csv, /Turma 1;Ana;8;Boneca/);
+  assert.match(csv, /Turma;Criança;Idade;Sexo;.*;Tênis;/);
+  assert.match(csv, /Turma 1;Ana;08;;Boneca/);
   assert.match(csv, /Alice Souza;alice@gmail.com;\(35\) 99999-1234;.*;Sim/);
 
   assert.equal((await post(`/api/admin/children/${ana.id}/release`, admin, {})).status, 200);
@@ -192,7 +192,7 @@ test('gestor importa planilha CSV pelo Painel sem apagar apadrinhamento nem foto
   assert.equal((await r.json()).count, 2);
   const list = await (await get('/api/children', admin)).json();
   const ana = list.find((c) => c.name === 'Ana');
-  assert.equal(ana.age, '9');
+  assert.equal(ana.age, '09');
   assert.deepEqual(ana.gifts, ['Boneca nova', 'Livro', 'Bola']);
   assert.equal(ana.photo_url, before.photo_url, 'foto preservada');
   assert.equal(ana.sponsor_name, before.sponsor_name, 'apadrinhamento preservado');
@@ -266,4 +266,23 @@ test('chave de automação: com token certo age como gestor; errado ou ausente �
   assert.equal((await fetch(`${base}/api/children`, { headers: tok('t') })).status, 401);
   const r = await fetch(`${base}/api/admin/import`, { method: 'POST', headers: { ...tok('t'.repeat(40)), 'Content-Type': 'text/csv' }, body: 'Turma;Nome\nTurma 9;Via Token\n' });
   assert.equal(r.status, 200);
+});
+
+test('sexo: aceita menina/menino/F/M, sai na API e no CSV; planilha sem a coluna não apaga', async () => {
+  const r = await post('/api/admin/children', admin, { class_name: 'Turma 7', name: 'Lia', age: '6', gender: 'menina' });
+  const lia = await r.json();
+  assert.equal(lia.gender, 'F');
+  const imp = await fetch(`${base}/api/admin/import`, { method: 'POST', headers: { 'Content-Type': 'text/csv', cookie: admin }, body: 'Turma;Nome;Idade;Sexo\nTurma 7;Téo;7;Menino\nTurma 7;Lia;7;\n' });
+  assert.equal(imp.status, 200);
+  const list = await (await get('/api/children', alice)).json();
+  assert.equal(list.find((c) => c.name === 'Téo').gender, 'M');
+  assert.equal(list.find((c) => c.name === 'Lia').gender, 'F', 'célula vazia preserva');
+  assert.match(await (await get('/api/admin/export.csv', admin)).text(), /Turma 7;Lia;07;Menina;/);
+});
+
+test('idade e tamanhos de 1 dígito ganham zero à esquerda; letras ficam iguais', async () => {
+  const r = await post('/api/admin/children', admin, { class_name: 'Turma 8', name: 'Zeca', age: '6', shirt_size: 'P', pants_size: '8', shoe_size: '30' });
+  const z = await r.json();
+  assert.equal(z.age, '06');
+  assert.deepEqual(z.sizes, { shirt: 'P', pants: '08', shoe: '30' });
 });

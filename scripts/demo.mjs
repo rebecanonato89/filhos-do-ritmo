@@ -7,16 +7,16 @@ import { openDb, upsertChild, deleteDemoChildren } from '../src/db.mjs';
 
 // Espelham as imagens em demo/photos (mesmo nome, idade, pedidos e tamanhos).
 const DEMO = [
-  ['Turma Exemplo A', 'Ana Clara', 'ana-clara', '8', 'Boneca que fala', 'Kit de pintura', 'Cesta de guloseimas', '8', '8', '30'],
-  ['Turma Exemplo A', 'Bernardo', 'bernardo', '10', 'Bicicleta aro 20', 'Bola de futebol', 'Chuteira', '10', '10', '33'],
-  ['Turma Exemplo A', 'Camila', 'camila', '11', 'Kit de maquiagem', 'Mochila', 'Estojo completo', '12', '12', '34'],
-  ['Turma Exemplo A', 'Davi', 'davi', '6', 'Carrinho controle remoto', 'Lego', 'Pijama', '6', '6', '28'],
-  ['Turma Exemplo A', 'Eloá', 'eloa', '7', 'Patinete', 'Livro de histórias', 'Tênis de luz', '8', '8', '29'],
-  ['Turma Exemplo B', 'Gabriel', 'gabriel', '13', 'Tablet', 'Fone de ouvido', 'Mochila', '14', '14', '38'],
-  ['Turma Exemplo B', 'Helena', 'helena', '12', 'Caixa de som', 'Kit de pulseiras', 'Sandália', '12', '12', '35'],
-  ['Turma Exemplo B', 'Isaac', 'isaac', '14', 'Videogame portátil', 'Camisa de time', 'Boné', '16', '16', '40'],
-  ['Turma Exemplo B', 'Júlia', 'julia', '13', 'Fone sem fio', 'Agenda e canetas', 'Perfume infantil', '14', '14', '36'],
-  ['Turma Exemplo B', 'Lucas', 'lucas', '12', 'Skate', 'Kit de futebol', 'Cesta de chocolates', '12', '14', '37'],
+  ['Turma Exemplo A', 'Ana Clara', 'ana-clara', '8', 'F', 'Boneca que fala', 'Kit de pintura', 'Cesta de guloseimas', '8', '8', '30'],
+  ['Turma Exemplo A', 'Bernardo', 'bernardo', '10', 'M', 'Bicicleta aro 20', 'Bola de futebol', 'Chuteira', '10', '10', '33'],
+  ['Turma Exemplo A', 'Camila', 'camila', '11', 'F', 'Kit de maquiagem', 'Mochila', 'Estojo completo', '12', '12', '34'],
+  ['Turma Exemplo A', 'Davi', 'davi', '6', 'M', 'Carrinho controle remoto', 'Lego', 'Pijama', '6', '6', '28'],
+  ['Turma Exemplo A', 'Eloá', 'eloa', '7', 'F', 'Patinete', 'Livro de histórias', 'Tênis de luz', '8', '8', '29'],
+  ['Turma Exemplo B', 'Gabriel', 'gabriel', '13', 'M', 'Tablet', 'Fone de ouvido', 'Mochila', '14', '14', '38'],
+  ['Turma Exemplo B', 'Helena', 'helena', '12', 'F', 'Caixa de som', 'Kit de pulseiras', 'Sandália', '12', '12', '35'],
+  ['Turma Exemplo B', 'Isaac', 'isaac', '14', 'M', 'Videogame portátil', 'Camisa de time', 'Boné', '16', '16', '40'],
+  ['Turma Exemplo B', 'Júlia', 'julia', '13', 'F', 'Fone sem fio', 'Agenda e canetas', 'Perfume infantil', '14', '14', '36'],
+  ['Turma Exemplo B', 'Lucas', 'lucas', '12', 'M', 'Skate', 'Kit de futebol', 'Cesta de chocolates', '12', '14', '37'],
 ];
 
 const dataDir = process.env.DATA_DIR || './data';
@@ -27,11 +27,11 @@ const action = process.argv[2];
 
 if (action === 'seed') {
   mkdirSync(photosDir, { recursive: true });
-  for (const [class_name, name, slug, age, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size] of DEMO) {
+  for (const [class_name, name, slug, age, gender, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size] of DEMO) {
     const photo = `demo-child-${slug}.jpg`;
     const letter_photo = `demo-${slug}.jpg`;
     for (const f of [photo, letter_photo]) copyFileSync(join(sourceDir, f), join(photosDir, f));
-    upsertChild(db, { class_name, name, photo, letter_photo, age, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size });
+    upsertChild(db, { class_name, name, photo, letter_photo, age, gender, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size });
   }
   console.log(`${DEMO.length} crianças de exemplo criadas.`);
 } else if (action === 'clear') {
