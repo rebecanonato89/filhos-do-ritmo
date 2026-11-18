@@ -293,14 +293,30 @@ async function approve(u, approved) {
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 let watermarkImg;
 
-function loadWatermark() {
-  watermarkImg ??= new Promise((resolve, reject) => {
+function fetchWatermark() {
+  return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onerror = () => reject(new Error('marca d\'água indisponível'));
     img.src = '/watermark.png';
   });
-  return watermarkImg;
+}
+
+// Guarda só o sucesso: uma falha passageira (ex.: servidor reiniciando num deploy) não pode
+// travar todos os envios seguintes. Sem marca d'água a foto NÃO é enviada.
+async function loadWatermark() {
+  if (watermarkImg) return watermarkImg;
+  let lastErr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      watermarkImg = await fetchWatermark();
+      return watermarkImg;
+    } catch (err) {
+      lastErr = err;
+      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+    }
+  }
+  throw new Error('Não foi possível carregar a marca d\'água; a foto não foi enviada. Aguarde um minuto e tente de novo.');
 }
 
 /**
