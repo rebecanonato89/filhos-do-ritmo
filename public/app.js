@@ -70,6 +70,7 @@ function card(c) {
     { class: `card letter-card ${c.status}${c.mine ? ' is-mine' : ''}` },
     h('div', { class: 'lc-head' },
       h('span', { class: 'lc-class' }, c.class_name),
+      state.me.is_admin ? h('button', { type: 'button', class: 'pencil', onclick: () => openEdit(c), title: 'Editar dados desta cartinha (gestor)', 'aria-label': `Editar ${c.name}` }, '✏️') : null,
       c.letter_photo_url
         ? h('button', { type: 'button', class: 'envelope', onclick: () => openImage(c, 'letter'), title: 'Ver a cartinha original' }, h('span', { 'aria-hidden': 'true' }, '✉️'), ' Ver cartinha')
         : null,
@@ -97,8 +98,13 @@ function card(c) {
 
 function renderSponsor() {
   const mine = state.children.filter((c) => c.mine);
+  const onlyMine = state.view === 'mine';
   $('mine').hidden = !mine.length;
   $('mineGrid').replaceChildren(...mine.map(card));
+  $('mineEmpty').hidden = !(onlyMine && !mine.length);
+  for (const id of ['sponsorToolbar', 'counter', 'classes']) $(id).hidden = onlyMine;
+  document.querySelectorAll('[data-badge=mine]').forEach((b) => { b.textContent = mine.length; b.hidden = !mine.length; });
+  if (onlyMine) return;
 
   const classes = [...new Set(state.children.map((c) => c.class_name))];
   $('classChips').replaceChildren(
@@ -201,21 +207,21 @@ function renderAdmin() {
   $('adminRows').replaceChildren(
     ...rows.map((c) =>
       h('tr', { class: c.status },
-        h('td', {}, c.class_name),
-        h('td', {}, c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age})`) : ''),
-        h('td', { class: 'nowrap' },
+        h('td', { 'data-label': 'Turma' }, c.class_name),
+        h('td', { 'data-label': 'Criança', class: 'cell-title' }, c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age})`) : ''),
+        h('td', { class: 'nowrap', 'data-label': 'Imagens' },
           h('button', { type: 'button', class: `img-btn${c.photo_url ? ' has' : ''}`, title: 'Enviar foto da criança', onclick: () => pickOne(c, 'photo') }, '📷'),
           h('button', { type: 'button', class: `img-btn${c.letter_photo_url ? ' has' : ''}`, title: 'Enviar foto da cartinha', onclick: () => pickOne(c, 'letter') }, '✉️'),
         ),
-        h('td', {}, c.sponsor_name ? [c.sponsor_name, h('br'), h('span', { class: 'muted small' }, c.sponsor_email)] : h('span', { class: 'muted' }, 'Disponível')),
-        h('td', {}, c.sponsor_phone_digits
+        h('td', { 'data-label': 'Padrinho' }, c.sponsor_name ? [c.sponsor_name, h('br'), h('span', { class: 'muted small' }, c.sponsor_email)] : h('span', { class: 'muted' }, 'Disponível')),
+        h('td', { 'data-label': 'WhatsApp', class: c.sponsor_phone_digits ? '' : 'empty-cell' }, c.sponsor_phone_digits
           ? h('a', { href: `https://wa.me/55${c.sponsor_phone_digits}`, target: '_blank', rel: 'noopener' }, c.sponsor_phone)
           : ''),
-        h('td', {}, formatDate(c.sponsored_at)),
-        h('td', {}, c.status === 'sponsored'
+        h('td', { 'data-label': 'Apadrinhado em', class: c.sponsored_at ? '' : 'empty-cell' }, formatDate(c.sponsored_at)),
+        h('td', { 'data-label': 'Entregue', class: c.status === 'sponsored' ? '' : 'empty-cell' }, c.status === 'sponsored'
           ? h('input', { type: 'checkbox', checked: c.delivered, 'aria-label': `Entregue para ${c.name}`, onchange: (e) => setDelivered(c, e.target.checked) })
           : ''),
-        h('td', {}, c.status === 'sponsored' ? h('button', { type: 'button', class: 'link danger', onclick: () => release(c) }, 'Liberar') : ''),
+        h('td', { class: c.status === 'sponsored' ? 'cell-actions' : 'empty-cell' }, c.status === 'sponsored' ? h('button', { type: 'button', class: 'link danger', onclick: () => release(c) }, 'Liberar') : ''),
       ),
     ),
   );
@@ -245,16 +251,15 @@ async function release(c) {
 async function loadUsers() {
   const users = await api('/api/admin/users');
   const pending = users.filter((u) => !u.approved).length;
-  $('pendingBadge').textContent = pending;
-  $('pendingBadge').hidden = !pending;
+  document.querySelectorAll('[data-badge=pending]').forEach((b) => { b.textContent = pending; b.hidden = !pending; });
   $('userRows').replaceChildren(
     ...users.map((u) =>
       h('tr', {},
-        h('td', {}, u.google_name),
-        h('td', {}, u.email),
-        h('td', {}, formatDate(u.created_at)),
-        h('td', {}, u.approved ? 'Liberado' : h('strong', { class: 'warn' }, 'Aguardando')),
-        h('td', {}, h('button', { type: 'button', class: u.approved ? 'link danger' : 'btn btn-small', onclick: () => approve(u, !u.approved) }, u.approved ? 'Bloquear' : 'Liberar')),
+        h('td', { 'data-label': 'Nome', class: 'cell-title' }, u.google_name),
+        h('td', { 'data-label': 'E-mail' }, u.email),
+        h('td', { 'data-label': 'Primeiro acesso' }, formatDate(u.created_at)),
+        h('td', { 'data-label': 'Situação' }, u.approved ? 'Liberado' : h('strong', { class: 'warn' }, 'Aguardando')),
+        h('td', { class: 'cell-actions' }, h('button', { type: 'button', class: u.approved ? 'link danger' : 'btn btn-small', onclick: () => approve(u, !u.approved) }, u.approved ? 'Bloquear' : 'Liberar')),
       ),
     ),
   );
@@ -318,6 +323,43 @@ async function uploadImage(c, kind, file) {
   const blob = await watermark(file, kind);
   const res = await fetch(`/api/admin/children/${c.id}/image?kind=${kind}`, { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob });
   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Falha no envio');
+}
+
+const EDIT_FIELDS = [
+  ['class_name', 'Turma'], ['name', 'Nome'], ['age', 'Idade'],
+  ['gift_1', 'Pedido 1'], ['gift_2', 'Pedido 2'], ['gift_3', 'Pedido 3'],
+  ['shirt_size', 'Camiseta'], ['pants_size', 'Calça'], ['shoe_size', 'Tênis'],
+];
+
+function openEdit(c) {
+  state.editing = c;
+  const values = {
+    class_name: c.class_name, name: c.name, age: c.age,
+    gift_1: c.gifts[0], gift_2: c.gifts[1], gift_3: c.gifts[2],
+    shirt_size: c.sizes.shirt, pants_size: c.sizes.pants, shoe_size: c.sizes.shoe,
+  };
+  $('editTitle').textContent = `Editar ${c.name}`;
+  $('editFields').replaceChildren(...EDIT_FIELDS.map(([k, label]) =>
+    h('label', { class: k.endsWith('size') || k === 'age' ? 'short' : '' }, label,
+      h('input', { name: k, value: values[k] || '', maxlength: '120', required: k === 'class_name' || k === 'name' }))));
+  $('editPhoto').onclick = () => pickOne(c, 'photo');
+  $('editLetter').onclick = () => pickOne(c, 'letter');
+  $('editError').hidden = true;
+  $('editDialog').showModal();
+}
+
+async function submitEdit(ev) {
+  ev.preventDefault();
+  const body = Object.fromEntries(new FormData($('editForm')));
+  try {
+    await api(`/api/admin/children/${state.editing.id}`, { method: 'POST', body });
+    $('editDialog').close();
+    toast('Cartinha atualizada');
+  } catch (err) {
+    $('editError').textContent = err.message;
+    $('editError').hidden = false;
+  }
+  await refresh();
 }
 
 function pickOne(c, kind) {
@@ -397,6 +439,14 @@ function render() {
   }
 }
 
+function setView(view) {
+  state.view = view;
+  document.querySelectorAll('.tab[data-view], .bottomnav [data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+  window.scrollTo({ top: 0 });
+  render();
+  refresh();
+}
+
 async function refresh() {
   try {
     state.children = await api('/api/children');
@@ -415,6 +465,8 @@ async function boot() {
   state.me = await api('/api/me');
   if (!state.me.authenticated) return show('loginView');
   $('topbar').hidden = false;
+  $('bottomNav').hidden = false;
+  document.body.classList.add('signed-in');
   clearInterval(state.timer);
   if (!state.me.approved) {
     $('pendingEmail').textContent = state.me.email;
@@ -426,15 +478,28 @@ async function boot() {
     }, POLL_MS);
     return;
   }
-  $('adminNav').hidden = !state.me.is_admin;
+  document.querySelectorAll('[data-admin]').forEach((el) => (el.hidden = !state.me.is_admin));
+  $('topNotice').hidden = false;
   await refresh();
-  state.timer = setInterval(() => document.visibilityState === 'visible' && !$('sponsorDialog').open && refresh(), POLL_MS);
+  state.timer = setInterval(() => document.visibilityState === 'visible' && !$('sponsorDialog').open && !$('editDialog').open && refresh(), POLL_MS);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(b.dataset.copy);
+      toast('Copiado! Cole no app do seu banco 💛');
+    } catch {
+      toast('Não foi possível copiar; use a chave 43.174.372/0001-47');
+    }
+  }));
+  // Altura real do topo (varia com o aviso) para os filtros grudarem logo abaixo dele.
+  new ResizeObserver(([e]) => document.documentElement.style.setProperty('--topbar-h', `${e.target.offsetHeight}px`)).observe($('topbar'));
   $('sponsorForm').addEventListener('submit', submitSponsor);
   $('dlgCancel').addEventListener('click', () => $('sponsorDialog').close());
   $('photoClose').addEventListener('click', () => $('photoDialog').close());
+  $('editForm').addEventListener('submit', submitEdit);
+  $('editCancel').addEventListener('click', () => $('editDialog').close());
   $('csvInput').addEventListener('change', (e) => e.target.files[0] && importCsv(e.target.files[0]).finally(() => (e.target.value = '')));
   for (const [id, kind] of [['photoInput', 'photo'], ['letterInput', 'letter']]) {
     $(id).addEventListener('change', (e) => bulkUpload([...e.target.files], kind).finally(() => (e.target.value = '')));
@@ -443,17 +508,12 @@ document.addEventListener('DOMContentLoaded', () => {
   for (const id of ['adminFilter', 'adminClass']) $(id).addEventListener('change', renderAdmin);
   $('adminSearch').addEventListener('input', renderAdmin);
   $('recheckBtn').addEventListener('click', () => location.reload());
-  $('logoutBtn').addEventListener('click', async () => {
+  document.querySelectorAll('[data-logout]').forEach((b) => b.addEventListener('click', async () => {
     await api('/auth/logout', { method: 'POST', body: {} });
     location.href = '/';
-  });
-  for (const btn of document.querySelectorAll('#adminNav .tab')) {
-    btn.addEventListener('click', () => {
-      state.view = btn.dataset.view;
-      document.querySelectorAll('#adminNav .tab').forEach((b) => b.classList.toggle('active', b === btn));
-      refresh();
-    });
-  }
+  }));
+  // Mesma navegação no topo (computador) e na barra inferior (celular).
+  document.querySelectorAll('[data-view]').forEach((btn) => btn.addEventListener('click', () => setView(btn.dataset.view)));
   document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && state.me?.approved && refresh());
   boot().catch(() => show('loginView'));
 });

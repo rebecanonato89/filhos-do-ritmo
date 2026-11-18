@@ -156,6 +156,14 @@ export function deleteDemoChildren(db) {
   return db.prepare("DELETE FROM children WHERE photo LIKE 'demo-%' OR letter_photo LIKE 'demo-%'").run().changes;
 }
 
+export const EDITABLE = ['class_name', 'name', 'age', 'gift_1', 'gift_2', 'gift_3', 'shirt_size', 'pants_size', 'shoe_size'];
+
+/** Corrige os dados digitados da cartinha. Lança erro de UNIQUE se turma+nome já existir. */
+export function updateChild(db, id, data) {
+  const sets = EDITABLE.map((k) => `${k} = ?`).join(', ');
+  return db.prepare(`UPDATE children SET ${sets} WHERE id = ?`).run(...EDITABLE.map((k) => data[k] ?? null), id).changes === 1;
+}
+
 /** Troca a imagem (kind = 'photo' | 'letter_photo') e devolve o arquivo anterior para ser apagado. */
 export function setChildImage(db, id, kind, file) {
   if (!['photo', 'letter_photo'].includes(kind)) throw new Error('kind inválido');

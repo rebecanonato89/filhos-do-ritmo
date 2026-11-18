@@ -219,3 +219,20 @@ test('upload de imagem: só gestor, só JPEG, troca apaga o arquivo anterior', a
   assert.equal(view.photo_url, second.url);
   assert.equal(view.letter_photo_url, letter.url);
 });
+
+test('gestor edita os dados da cartinha; padrinho não pode; nome duplicado na turma é recusado', async () => {
+  const list = await (await get('/api/children', admin)).json();
+  const carlos = list.find((c) => c.name === 'Carlos');
+  const ana = list.find((c) => c.name === 'Ana');
+  const body = { class_name: 'Turma 3', name: 'Carlos Eduardo', age: '8', gift_1: 'Pipa', gift_2: 'Bola', gift_3: '', shirt_size: '8', pants_size: '8', shoe_size: '28' };
+  assert.equal((await post(`/api/children/${carlos.id}`, alice, body)).status, 404, 'rota de padrinho não existe');
+  assert.equal((await post(`/api/admin/children/${carlos.id}`, alice, body)).status, 403);
+  assert.equal((await post(`/api/admin/children/${carlos.id}`, admin, { ...body, name: '' })).status, 400);
+  const r = await post(`/api/admin/children/${carlos.id}`, admin, body);
+  assert.equal(r.status, 200);
+  const updated = await r.json();
+  assert.equal(updated.name, 'Carlos Eduardo');
+  assert.deepEqual(updated.gifts, ['Pipa', 'Bola']);
+  assert.ok(updated.photo_url, 'imagem preservada');
+  assert.equal((await post(`/api/admin/children/${carlos.id}`, admin, { ...body, class_name: ana.class_name, name: ana.name })).status, 409);
+});

@@ -2,28 +2,47 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#000000">
   <title>Filhos do Ritmo · Natal Solidário</title>
   <link rel="icon" href="/icon.png">
-  <link rel="apple-touch-icon" href="/icon.png">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Filhos do Ritmo">
   <link rel="stylesheet" href="/styles.css">
   <script src="/app.js" defer></script>
 </head>
 <body>
   <header class="topbar" id="topbar" hidden>
-    <img src="/logo.jpg" alt="" class="topbar-logo">
-    <div class="topbar-title">
-      <strong>Filhos do Ritmo</strong>
-      <span>Natal Solidário</span>
-    </div>
-    <nav class="topbar-nav" id="adminNav" hidden>
+    <button type="button" class="brand" data-view="sponsor" title="Ver cartinhas">
+      <img src="/logo.jpg" alt="" class="topbar-logo">
+      <span class="topbar-title">
+        <strong>Filhos do Ritmo</strong>
+        <span>Natal Solidário</span>
+      </span>
+    </button>
+    <nav class="topbar-nav" id="topNav">
       <button type="button" data-view="sponsor" class="tab active">Cartinhas</button>
-      <button type="button" data-view="admin" class="tab">Painel <span class="badge-count" id="pendingBadge" title="Acessos aguardando liberação" hidden></span></button>
+      <button type="button" data-view="mine" class="tab">Minhas <span class="badge-count soft" data-badge="mine" hidden></span></button>
+      <button type="button" data-view="admin" class="tab" data-admin hidden>Painel <span class="badge-count" data-badge="pending" title="Acessos aguardando liberação" hidden></span></button>
     </nav>
-    <button type="button" class="link" id="logoutBtn">Sair</button>
+    <a class="social social-first" href="https://www.instagram.com/filhos.do.ritmo/" target="_blank" rel="noopener" title="Instagram @filhos.do.ritmo" aria-label="Instagram do Filhos do Ritmo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.9.9 1.4.2.4.4 1.1.4 2.2.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.9.7-1.4.9-.4.2-1.1.4-2.2.4-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.9-.9-1.4-.2-.4-.4-1.1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.9-.7 1.4-.9.4-.2 1.1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 1.8c-3.1 0-3.5 0-4.7.1-1.1.1-1.7.2-2.1.4-.5.2-.9.4-1.2.8-.4.4-.6.7-.8 1.2-.2.4-.3 1-.4 2.1C2.7 9.6 2.7 10 2.7 12s0 2.4.1 3.6c.1 1.1.2 1.7.4 2.1.2.5.4.9.8 1.2.4.4.7.6 1.2.8.4.2 1 .3 2.1.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c1.1-.1 1.7-.2 2.1-.4.5-.2.9-.4 1.2-.8.4-.4.6-.7.8-1.2.2-.4.3-1 .4-2.1.1-1.2.1-1.6.1-3.6s0-2.4-.1-3.6c-.1-1.1-.2-1.7-.4-2.1-.2-.5-.4-.9-.8-1.2-.4-.4-.7-.6-1.2-.8-.4-.2-1-.3-2.1-.4C15.5 4 15.1 4 12 4zm0 3.1a4.9 4.9 0 1 1 0 9.8 4.9 4.9 0 0 1 0-9.8zm0 8.1a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zm6.2-8.3a1.1 1.1 0 1 1-2.3 0 1.1 1.1 0 0 1 2.3 0z"/></svg></a>
+    <a class="social" href="https://www.facebook.com/people/Filhos-do-Ritmo/61577747045518/" target="_blank" rel="noopener" title="Facebook do Filhos do Ritmo" aria-label="Facebook do Filhos do Ritmo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M13.5 21v-7.6h2.6l.4-3h-3V8.5c0-.9.3-1.5 1.5-1.5h1.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3.1z"/></svg></a>
+    <a class="social" href="https://linktr.ee/filhos.ritmo" target="_blank" rel="noopener" title="Todos os links do Filhos do Ritmo" aria-label="Linktree do Filhos do Ritmo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v18M4.5 7.5l15 9M19.5 7.5l-15 9"/></svg></a>
+    <button type="button" class="link logout-desktop" data-logout>Sair</button>
+    <p class="topbar-notice" id="topNotice" hidden>🎁 Escolha <strong>1 ou mais</strong> das 3 opções de presente · 📦 Entrega até <strong>01/12</strong></p>
   </header>
+
+  <nav class="bottomnav" id="bottomNav" hidden aria-label="Navegação">
+    <button type="button" data-view="sponsor" class="active"><span class="ico" aria-hidden="true">🎄</span><span>Cartinhas</span></button>
+    <button type="button" data-view="mine"><span class="ico" aria-hidden="true">💛<span class="badge-count soft" data-badge="mine" hidden></span></span><span>Minhas</span></button>
+    <button type="button" data-view="admin" data-admin hidden><span class="ico" aria-hidden="true">🛠️<span class="badge-count" data-badge="pending" hidden></span></span><span>Painel</span></button>
+    <button type="button" data-logout><span class="ico" aria-hidden="true">🚪</span><span>Sair</span></button>
+  </nav>
 
   <main id="app">
     <section class="center" id="loading"><p>Carregando…</p></section>
@@ -47,19 +66,19 @@
     </section>
 
     <section id="sponsorView" hidden>
-      <div class="intro">
-        <p>Cada criança escreveu <strong>3 opções de presente</strong>. Você escolhe dar uma ou mais, de acordo com suas condições. Se quiser, também pode presentear com roupa ou calçado (tamanhos no cartão).</p>
-        <p class="deadline">📦 Entrega dos presentes até <strong>01/12</strong>.</p>
-      </div>
 
       <div id="mine" hidden>
-        <h2>Minhas crianças</h2>
+        <h2>💛 Minhas crianças</h2>
         <div class="grid" id="mineGrid"></div>
       </div>
+      <div class="center empty-mine" id="mineEmpty" hidden>
+        <p>Você ainda não apadrinhou nenhuma criança.</p>
+        <button type="button" class="btn" data-view="sponsor">🎄 Ver cartinhas</button>
+      </div>
 
-      <div class="toolbar">
+      <div class="toolbar" id="sponsorToolbar">
         <div class="chips" id="classChips"></div>
-        <label class="switch"><input type="checkbox" id="onlyAvailable"> Só disponíveis</label>
+        <label class="switch chip-toggle"><input type="checkbox" id="onlyAvailable"> Só disponíveis</label>
       </div>
       <p class="counter" id="counter"></p>
       <div id="classes"></div>
@@ -110,6 +129,46 @@
     </section>
   </main>
 
+  <footer class="site-footer">
+    <div class="footer-inner footer-3">
+      <section>
+        <h3>Filhos do Ritmo</h3>
+        <p>Projeto social de Lavras (MG) que atende mais de 100 crianças e adolescentes em situação de vulnerabilidade com música, dança, esporte e atividades educativas. Criado por Diego e Priscila.</p>
+        <p class="muted small">Associação Filhos do Ritmo · CNPJ 43.174.372/0001-47 · Utilidade pública (Lei MG 24.744/2024)</p>
+        <p class="footer-social">
+          <a href="https://www.instagram.com/filhos.do.ritmo/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.9.9 1.4.2.4.4 1.1.4 2.2.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.9.7-1.4.9-.4.2-1.1.4-2.2.4-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.9-.9-1.4-.2-.4-.4-1.1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.9-.7 1.4-.9.4-.2 1.1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 1.8c-3.1 0-3.5 0-4.7.1-1.1.1-1.7.2-2.1.4-.5.2-.9.4-1.2.8-.4.4-.6.7-.8 1.2-.2.4-.3 1-.4 2.1C2.7 9.6 2.7 10 2.7 12s0 2.4.1 3.6c.1 1.1.2 1.7.4 2.1.2.5.4.9.8 1.2.4.4.7.6 1.2.8.4.2 1 .3 2.1.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c1.1-.1 1.7-.2 2.1-.4.5-.2.9-.4 1.2-.8.4-.4.6-.7.8-1.2.2-.4.3-1 .4-2.1.1-1.2.1-1.6.1-3.6s0-2.4-.1-3.6c-.1-1.1-.2-1.7-.4-2.1-.2-.5-.4-.9-.8-1.2-.4-.4-.7-.6-1.2-.8-.4-.2-1-.3-2.1-.4C15.5 4 15.1 4 12 4zm0 3.1a4.9 4.9 0 1 1 0 9.8 4.9 4.9 0 0 1 0-9.8zm0 8.1a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zm6.2-8.3a1.1 1.1 0 1 1-2.3 0 1.1 1.1 0 0 1 2.3 0z"/></svg><span>@filhos.do.ritmo</span></a>
+          <a href="https://www.facebook.com/people/Filhos-do-Ritmo/61577747045518/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M13.5 21v-7.6h2.6l.4-3h-3V8.5c0-.9.3-1.5 1.5-1.5h1.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3.1z"/></svg><span>Facebook</span></a>
+          <a href="https://linktr.ee/filhos.ritmo" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v18M4.5 7.5l15 9M19.5 7.5l-15 9"/></svg><span>Todos os links</span></a>
+        </p>
+      </section>
+      <section class="pix">
+        <h3>💛 Apoie o projeto · PIX Solidário</h3>
+        <div class="pix-box">
+          <img src="/pix-qr.png" alt="QR code PIX da Associação Filhos do Ritmo" width="150" height="150">
+          <div>
+            <p class="small">Chave PIX (CNPJ)<br><strong>43.174.372/0001-47</strong><br><span class="muted">Associação Filhos do Ritmo · Lavras</span></p>
+            <button type="button" class="btn btn-small" data-copy="43174372000147">Copiar chave</button>
+            <button type="button" class="btn btn-small btn-ghost-dark" data-copy="00020126580014br.gov.bcb.pix0114431743720001470218Receb GeralDoacoes5204000053039865802BR5925ASSOCIACAO FILHOS DO RITM6006LAVRAS62290525F4US2TaoqAJ1lqtrGN8jbz5Sg630433DC">PIX copia e cola</button>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h3>Privacidade · LGPD (Lei nº 13.709/2018)</h3>
+        <details>
+          <summary>Como tratamos os dados neste portal</summary>
+          <ul>
+            <li><strong>Imagens das crianças:</strong> publicadas com autorização dos responsáveis, por meio do termo de uso de imagem do projeto. Ficam visíveis só para padrinhos identificados e liberados pela organização, com marca d'água e sem indexação em buscadores.</li>
+            <li><strong>Dados do padrinho</strong> (nome, e-mail Google e WhatsApp): usados apenas para organizar a campanha e combinar a entrega do presente. Não são compartilhados nem exibidos a outros padrinhos.</li>
+            <li><strong>Prazo:</strong> os dados são mantidos só durante a campanha de Natal 2026.</li>
+            <li><strong>Seus direitos:</strong> você pode pedir acesso, correção ou exclusão dos seus dados falando com a organização pelo Instagram do projeto.</li>
+            <li><strong>Controladora:</strong> Associação Filhos do Ritmo. <strong>Operação técnica:</strong> rebecanonato89.dev.</li>
+          </ul>
+        </details>
+      </section>
+    </div>
+    <p class="made-by">Feito com 🧡 por <a href="https://rebecanonato89.dev" target="_blank" rel="noopener">rebecanonato89.dev</a></p>
+  </footer>
+
   <dialog id="sponsorDialog">
     <form method="dialog" id="sponsorForm">
       <h2>Apadrinhar <span id="dlgChild"></span></h2>
@@ -125,6 +184,23 @@
       <div class="actions">
         <button type="button" class="btn btn-ghost" id="dlgCancel">Cancelar</button>
         <button type="submit" class="btn" id="dlgSubmit">Confirmar apadrinhamento</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="editDialog">
+    <form method="dialog" id="editForm">
+      <h2 id="editTitle">Editar</h2>
+      <div class="edit-grid" id="editFields"></div>
+      <div class="edit-images">
+        <button type="button" class="btn btn-ghost btn-small" id="editPhoto">📷 Trocar foto</button>
+        <button type="button" class="btn btn-ghost btn-small" id="editLetter">✉️ Trocar cartinha</button>
+      </div>
+      <p class="muted small">Imagens novas recebem a marca d'água no navegador antes do envio.</p>
+      <p class="error" id="editError" hidden></p>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" id="editCancel">Cancelar</button>
+        <button type="submit" class="btn">Salvar</button>
       </div>
     </form>
   </dialog>
