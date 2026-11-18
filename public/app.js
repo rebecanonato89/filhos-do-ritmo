@@ -85,7 +85,6 @@ function card(c) {
     ),
     h('p', { class: 'lc-q' }, 'Neste Natal, eu gostaria de ganhar:'),
     h('ol', { class: 'lc-wishes' }, c.gifts.map((g) => h('li', {}, field(g)))),
-    c.letter ? h('p', { class: 'lc-free hand' }, `“${c.letter}”`) : null,
     sizes.some(([, , v]) => v)
       ? h('div', { class: 'lc-sizes' },
           h('p', { class: 'lc-sizes-title' }, 'Meus tamanhos'),

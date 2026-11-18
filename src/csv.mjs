@@ -30,7 +30,6 @@ const ALIASES = {
   shirt_size: ['camisa', 'tamcamisa', 'tamanhocamisa'], pants_size: ['calca', 'tamcalca', 'tamanhocalca'],
   shoe_size: ['sapato', 'tamsapato', 'tamanhosapato', 'calcado', 'tenis', 'tamtenis', 'tamanhotenis'],
   age: ['idade', 'anos'],
-  letter: ['cartinha', 'texto', 'textodacartinha', 'mensagem'],
 };
 
 
