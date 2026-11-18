@@ -10,10 +10,20 @@ function h(tag, attrs = {}, ...children) {
     if (v == null || v === false) continue;
     if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
     else if (k === 'class') el.className = v;
+    // CSSOM em vez do atributo style: a CSP (style-src 'self') bloqueia estilos inline.
+    else if (k === 'vars') for (const [n, val] of Object.entries(v)) el.style.setProperty(n, val);
     else el.setAttribute(k, v === true ? '' : v);
   }
   for (const c of children.flat()) if (c != null && c !== false) el.append(c instanceof Node ? c : String(c));
   return el;
+}
+
+// Cor fixa por turma (ordem alfabética), para diferenciar chips, títulos, cards e linhas do Painel.
+const CLASS_COLORS = ['#2563eb', '#9333ea', '#db2777', '#0891b2', '#ca8a04', '#16a34a', '#ea580c', '#4f46e5', '#be123c', '#0d9488'];
+function classColor(name) {
+  const all = [...new Set(state.children.map((c) => c.class_name))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const i = Math.max(0, all.indexOf(name));
+  return { '--tc': CLASS_COLORS[i % CLASS_COLORS.length] };
 }
 
 async function api(path, opts = {}) {
@@ -67,9 +77,9 @@ function card(c) {
 
   return h(
     'article',
-    { class: `card letter-card ${c.status}${c.mine ? ' is-mine' : ''}` },
+    { class: `card letter-card ${c.status}${c.mine ? ' is-mine' : ''}`, vars: classColor(c.class_name) },
     h('div', { class: 'lc-head' },
-      h('span', { class: 'lc-class' }, c.class_name),
+      h('span', { class: 'lc-class', vars: classColor(c.class_name) }, c.class_name),
       state.me.is_admin ? h('button', { type: 'button', class: 'pencil', onclick: () => openEdit(c), title: 'Editar dados desta cartinha (gestor)', 'aria-label': `Editar ${c.name}` }, '✏️') : null,
       c.letter_photo_url
         ? h('button', { type: 'button', class: 'envelope', onclick: () => openImage(c, 'letter'), title: 'Ver a cartinha original' }, h('span', { 'aria-hidden': 'true' }, '✉️'), ' Ver cartinha')
@@ -109,7 +119,7 @@ function renderSponsor() {
   const classes = [...new Set(state.children.map((c) => c.class_name))];
   $('classChips').replaceChildren(
     ...['', ...classes].map((cl) =>
-      h('button', { type: 'button', class: `chip${state.classFilter === cl ? ' active' : ''}`, onclick: () => { state.classFilter = cl; renderSponsor(); } }, cl || 'Todas'),
+      h('button', { type: 'button', class: `chip${cl ? ' chip-class' : ''}${state.classFilter === cl ? ' active' : ''}`, vars: cl ? classColor(cl) : null, onclick: () => { state.classFilter = cl; renderSponsor(); } }, cl || 'Todas'),
     ),
   );
 
@@ -126,7 +136,7 @@ function renderSponsor() {
     groups.get(c.class_name).push(c);
   }
   $('classes').replaceChildren(
-    ...[...groups].map(([cl, list]) => h('section', { class: 'class-group' }, h('h2', {}, cl), h('div', { class: 'grid' }, list.map(card)))),
+    ...[...groups].map(([cl, list]) => h('section', { class: 'class-group', vars: classColor(cl) }, h('h2', {}, cl, h('span', { class: 'class-count' }, ` · ${list.length}`)), h('div', { class: 'grid' }, list.map(card)))),
   );
 }
 
@@ -174,6 +184,7 @@ async function submitSponsor(ev) {
 
 function renderAdmin() {
   const all = state.children;
+  $('kidsCount').textContent = all.length;
   const sponsored = all.filter((c) => c.status === 'sponsored');
   const delivered = sponsored.filter((c) => c.delivered);
   const stat = (n, label) => h('div', { class: 'stat' }, h('strong', {}, n), h('span', {}, label));
@@ -207,7 +218,7 @@ function renderAdmin() {
   $('adminRows').replaceChildren(
     ...rows.map((c) =>
       h('tr', { class: c.status },
-        h('td', { 'data-label': 'Turma' }, c.class_name),
+        h('td', { 'data-label': 'Turma' }, h('span', { class: 'class-pill', vars: classColor(c.class_name) }, c.class_name)),
         h('td', { 'data-label': 'Criança', class: 'cell-title' },
           h('button', { type: 'button', class: 'pencil pencil-sm', onclick: () => openEdit(c), title: 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, '✏️'),
           c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age})`) : ''),
@@ -491,7 +502,7 @@ async function boot() {
   document.querySelectorAll('[data-admin]').forEach((el) => (el.hidden = !state.me.is_admin));
   $('topNotice').hidden = false;
   await refresh();
-  state.timer = setInterval(() => document.visibilityState === 'visible' && !$('sponsorDialog').open && !$('editDialog').open && refresh(), POLL_MS);
+  state.timer = setInterval(() => document.visibilityState === 'visible' && !$('sponsorDialog').open && !$('editDialog').open && !$('uploadDialog').open && refresh(), POLL_MS);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -510,6 +521,13 @@ document.addEventListener('DOMContentLoaded', () => {
   $('photoClose').addEventListener('click', () => $('photoDialog').close());
   $('editForm').addEventListener('submit', submitEdit);
   $('newChildBtn').addEventListener('click', () => openEdit(null));
+  $('uploadBtn').addEventListener('click', () => $('uploadDialog').showModal());
+  $('uploadClose').addEventListener('click', () => $('uploadDialog').close());
+  document.querySelectorAll('.seg[data-panel]').forEach((b) => b.addEventListener('click', () => {
+    document.querySelectorAll('.seg[data-panel]').forEach((x) => x.classList.toggle('active', x === b));
+    $('panelKids').hidden = b.dataset.panel !== 'kids';
+    $('panelUsers').hidden = b.dataset.panel !== 'users';
+  }));
   $('editCancel').addEventListener('click', () => $('editDialog').close());
   $('csvInput').addEventListener('change', (e) => e.target.files[0] && importCsv(e.target.files[0]).finally(() => (e.target.value = '')));
   for (const [id, kind] of [['photoInput', 'photo'], ['letterInput', 'letter']]) {

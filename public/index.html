@@ -85,19 +85,14 @@
     </section>
 
     <section id="adminView" hidden>
-      <details class="loader">
-        <summary>📥 Carregar planilha e fotos</summary>
-        <ol class="steps">
-          <li><strong>Planilha</strong> salva como CSV, com as colunas <code>Turma; Nome; Idade; Pedido 1; Pedido 2; Pedido 3; Camisa; Calça; Tênis</code>. Pode importar de novo para corrigir: apadrinhamentos não são apagados.
-            <label class="file-btn">Escolher planilha (.csv)<input type="file" id="csvInput" accept=".csv,text/csv"></label></li>
-          <li><strong>Fotos das crianças</strong>: o nome do arquivo deve ser o nome da criança (ex.: <code>Ana Clara Souza.jpg</code>). Pode selecionar várias de uma vez.
-            <label class="file-btn">Escolher fotos das crianças<input type="file" id="photoInput" accept="image/*" multiple></label></li>
-          <li><strong>Fotos das cartinhas</strong>: mesmo padrão de nome.
-            <label class="file-btn">Escolher fotos das cartinhas<input type="file" id="letterInput" accept="image/*" multiple></label></li>
-        </ol>
-        <p class="muted small">A marca d'água com a logo é aplicada <strong>no seu navegador</strong> antes do envio; a localização (GPS) da foto é removida e o arquivo original não sai do seu aparelho. Para trocar uma imagem específica, use 📷 / ✉️ na linha da criança.</p>
-        <ul class="upload-log" id="uploadLog" hidden></ul>
-      </details>
+      <div class="admin-head">
+        <div class="segmented" role="tablist">
+          <button type="button" class="seg active" data-panel="kids" role="tab">👧 Crianças <span class="seg-count" id="kidsCount"></span></button>
+          <button type="button" class="seg" data-panel="users" role="tab">🔑 Acessos <span class="badge-count" data-badge="pending" hidden></span></button>
+        </div>
+        <button type="button" class="icon-btn" id="uploadBtn" title="Carregar planilha e fotos" aria-label="Carregar planilha e fotos">📥</button>
+      </div>
+      <div id="panelKids">
       <div class="stats" id="stats"></div>
       <div class="toolbar">
         <select id="adminFilter">
@@ -118,14 +113,16 @@
           <tbody id="adminRows"></tbody>
         </table>
       </div>
+      </div>
 
-      <h2>Acessos</h2>
+      <div id="panelUsers" hidden>
       <p class="muted small">Quem fez login aparece aqui. Só quem estiver liberado vê as fotos e cartinhas.</p>
       <div class="table-wrap">
         <table class="table">
           <thead><tr><th>Nome (Google)</th><th>E-mail</th><th>Primeiro acesso</th><th>Situação</th><th></th></tr></thead>
           <tbody id="userRows"></tbody>
         </table>
+      </div>
       </div>
     </section>
   </main>
@@ -187,6 +184,21 @@
         <button type="submit" class="btn" id="dlgSubmit">Confirmar apadrinhamento</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="uploadDialog">
+    <h2>📥 Carregar planilha e fotos</h2>
+    <ol class="steps">
+      <li><strong>Planilha</strong> em CSV com as colunas <code>Turma; Nome; Idade; Pedido 1; Pedido 2; Pedido 3; Camisa; Calça; Tênis</code>. Pode importar de novo para corrigir: apadrinhamentos não são apagados.
+        <label class="file-btn">📄 Escolher planilha (.csv)<input type="file" id="csvInput" accept=".csv,text/csv"></label></li>
+      <li><strong>Fotos das crianças</strong>: o nome do arquivo deve ser o nome da criança (ex.: <code>Ana Clara Souza.jpg</code>). Pode selecionar várias.
+        <label class="file-btn">📷 Escolher fotos das crianças<input type="file" id="photoInput" accept="image/*" multiple></label></li>
+      <li><strong>Fotos das cartinhas</strong>: mesmo padrão de nome.
+        <label class="file-btn">✉️ Escolher fotos das cartinhas<input type="file" id="letterInput" accept="image/*" multiple></label></li>
+    </ol>
+    <p class="muted small">A marca d'água é aplicada <strong>no seu navegador</strong> antes do envio; o GPS da foto é removido e o original não sai do seu aparelho. Para uma criança específica, use o ✏️.</p>
+    <ul class="upload-log" id="uploadLog" hidden></ul>
+    <div class="actions"><button type="button" class="btn" id="uploadClose">Fechar</button></div>
   </dialog>
 
   <dialog id="editDialog">
