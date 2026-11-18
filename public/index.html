@@ -20,7 +20,7 @@
     </div>
     <nav class="topbar-nav" id="adminNav" hidden>
       <button type="button" data-view="sponsor" class="tab active">Cartinhas</button>
-      <button type="button" data-view="admin" class="tab">Painel</button>
+      <button type="button" data-view="admin" class="tab">Painel <span class="badge-count" id="pendingBadge" title="Acessos aguardando liberação" hidden></span></button>
     </nav>
     <button type="button" class="link" id="logoutBtn">Sair</button>
   </header>
@@ -40,9 +40,10 @@
     <section class="center" id="pendingView" hidden>
       <img src="/logo.jpg" alt="" class="hero-logo small-logo">
       <h1>Quase lá!</h1>
-      <p>Seu acesso (<strong id="pendingEmail"></strong>) foi registrado e está aguardando liberação da organização.</p>
-      <p class="muted">Avise a responsável pelas cartinhas no grupo do WhatsApp. Assim que for liberado, é só recarregar esta página.</p>
-      <button type="button" class="btn" id="recheckBtn">Já fui liberado(a), recarregar</button>
+      <p>Seu acesso (<strong id="pendingEmail"></strong>) foi registrado.</p>
+      <p class="notice">Isso é normal 🙂 Para proteger as crianças, cada padrinho é liberado manualmente pela organização. <strong>Esta página abre sozinha</strong> assim que seu acesso for liberado; pode deixá-la aberta.</p>
+      <p class="muted small">Demorando? Avise a responsável pelas cartinhas no grupo do WhatsApp.</p>
+      <button type="button" class="btn btn-ghost" id="recheckBtn">Verificar agora</button>
     </section>
 
     <section id="sponsorView" hidden>

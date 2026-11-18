@@ -44,13 +44,13 @@ const formatDate = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { dateS
 // ---------- Padrinho ----------
 
 function sizesLine(s) {
-  const parts = [s.shirt && `Camisa ${s.shirt}`, s.pants && `Calça ${s.pants}`, s.shoe && `Sapato ${s.shoe}`].filter(Boolean);
+  const parts = [s.shirt && `Camisa ${s.shirt}`, s.pants && `Calça ${s.pants}`, s.shoe && `Tênis ${s.shoe}`].filter(Boolean);
   return parts.length ? h('p', { class: 'sizes' }, '👕 ', parts.join(' · ')) : null;
 }
 
 function card(c) {
   const photo = c.photo_url
-    ? h('button', { type: 'button', class: 'photo', onclick: () => openPhoto(c) }, h('img', { src: c.photo_url, alt: `Foto de ${c.name}`, loading: 'lazy' }))
+    ? h('button', { type: 'button', class: 'photo', onclick: () => openPhoto(c) }, h('img', { src: c.photo_url, alt: `Cartinha de ${c.name}`, loading: 'lazy' }), h('span', { class: 'zoom' }, '🔍 Ver cartinha'))
     : h('div', { class: 'photo placeholder' }, '🎁');
 
   let footer;
@@ -68,7 +68,7 @@ function card(c) {
     photo,
     h('div', { class: 'card-body' },
       h('h3', {}, c.name),
-      h('p', { class: 'muted small' }, c.class_name),
+      h('p', { class: 'muted small' }, [c.age && `${c.age} anos`, c.class_name].filter(Boolean).join(' · ')),
       c.letter ? h('button', { type: 'button', class: 'letter', onclick: () => openPhoto(c) }, h('span', {}, `“${c.letter}”`), h('em', {}, 'Ler cartinha')) : null,
       c.gifts.length ? h('p', { class: 'label' }, '3 opções de presente') : null,
       h('ol', { class: 'gifts' }, c.gifts.map((g) => h('li', {}, g))),
@@ -111,7 +111,7 @@ function openPhoto(c) {
   $('photoBig').hidden = !c.photo_url;
   if (c.photo_url) $('photoBig').src = c.photo_url;
   $('photoBig').alt = `Foto de ${c.name}`;
-  $('photoName').textContent = c.name;
+  $('photoName').textContent = c.age ? `${c.name}, ${c.age} anos` : c.name;
   $('photoLetter').textContent = c.letter || '';
   $('photoLetter').hidden = !c.letter;
   $('photoDialog').showModal();
@@ -184,7 +184,7 @@ function renderAdmin() {
     ...rows.map((c) =>
       h('tr', { class: c.status },
         h('td', {}, c.class_name),
-        h('td', {}, c.name),
+        h('td', {}, c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age})`) : ''),
         h('td', {}, c.sponsor_name ? [c.sponsor_name, h('br'), h('span', { class: 'muted small' }, c.sponsor_email)] : h('span', { class: 'muted' }, 'Disponível')),
         h('td', {}, c.sponsor_phone_digits
           ? h('a', { href: `https://wa.me/55${c.sponsor_phone_digits}`, target: '_blank', rel: 'noopener' }, c.sponsor_phone)
@@ -222,6 +222,9 @@ async function release(c) {
 
 async function loadUsers() {
   const users = await api('/api/admin/users');
+  const pending = users.filter((u) => !u.approved).length;
+  $('pendingBadge').textContent = pending;
+  $('pendingBadge').hidden = !pending;
   $('userRows').replaceChildren(
     ...users.map((u) =>
       h('tr', {},
@@ -261,7 +264,7 @@ async function refresh() {
   try {
     state.children = await api('/api/children');
     render();
-    if (state.view === 'admin') await loadUsers();
+    if (state.me.is_admin) await loadUsers();
   } catch (err) {
     if (err.status === 401 || err.status === 403) return boot();
   }
@@ -275,13 +278,20 @@ async function boot() {
   state.me = await api('/api/me');
   if (!state.me.authenticated) return show('loginView');
   $('topbar').hidden = false;
+  clearInterval(state.timer);
   if (!state.me.approved) {
     $('pendingEmail').textContent = state.me.email;
-    return show('pendingView');
+    show('pendingView');
+    // Abre sozinho assim que o gestor liberar, sem o padrinho precisar recarregar.
+    state.timer = setInterval(async () => {
+      const me = await api('/api/me').catch(() => null);
+      if (me?.approved) boot();
+    }, POLL_MS);
+    return;
   }
   $('adminNav').hidden = !state.me.is_admin;
   await refresh();
-  setInterval(() => document.visibilityState === 'visible' && !$('sponsorDialog').open && refresh(), POLL_MS);
+  state.timer = setInterval(() => document.visibilityState === 'visible' && !$('sponsorDialog').open && refresh(), POLL_MS);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

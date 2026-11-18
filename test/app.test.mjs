@@ -16,7 +16,7 @@ before(async () => {
   (await import('node:fs')).mkdirSync(photosDir);
   writeFileSync(join(photosDir, 'ana.jpg'), 'fake-jpeg');
   db = openDb(join(dir, 'app.db'));
-  upsertChild(db, { class_name: 'Turma 1', name: 'Ana', photo: 'ana.jpg', gift_1: 'Boneca', gift_2: 'Livro', gift_3: 'Bola', shirt_size: '8', pants_size: '8', shoe_size: '30', letter: 'Querido padrinho' });
+  upsertChild(db, { class_name: 'Turma 1', name: 'Ana', photo: 'ana.jpg', gift_1: 'Boneca', gift_2: 'Livro', gift_3: 'Bola', shirt_size: '8', pants_size: '8', shoe_size: '30', letter: 'Querido padrinho', age: '8' });
   upsertChild(db, { class_name: 'Turma 2', name: 'Bruno', photo: null, gift_1: 'Carrinho', gift_2: null, gift_3: null, shirt_size: null, pants_size: null, shoe_size: null });
 
   const config = {
@@ -99,6 +99,7 @@ test('path traversal em fotos não escapa da pasta', async () => {
 test('apadrinhar: valida dados, bloqueia segundo padrinho e esconde dados de terceiros', async () => {
   const ana = (await (await get('/api/children', alice)).json()).find((c) => c.name === 'Ana');
   assert.equal(ana.letter, 'Querido padrinho');
+  assert.equal(ana.age, '8');
 
   assert.equal((await post(`/api/children/${ana.id}/sponsor`, alice, { name: 'Al', phone: '35999999999' })).status, 400);
   assert.equal((await post(`/api/children/${ana.id}/sponsor`, alice, { name: 'Alice Souza', phone: '123' })).status, 400);
@@ -144,7 +145,8 @@ test('gestor: entrega, liberação e exportação; padrinho não acessa', async 
 
   assert.equal((await get('/api/admin/export.csv', alice)).status, 403);
   const csv = await (await get('/api/admin/export.csv', admin)).text();
-  assert.match(csv, /Turma;Criança/);
+  assert.match(csv, /Turma;Criança;Idade;.*;Tênis;/);
+  assert.match(csv, /Turma 1;Ana;8;Boneca/);
   assert.match(csv, /Alice Souza;alice@gmail.com;\(35\) 99999-1234;.*;Sim/);
 
   assert.equal((await post(`/api/admin/children/${ana.id}/release`, admin, {})).status, 200);

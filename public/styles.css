@@ -44,7 +44,7 @@ a { color: var(--orange-dark); }
 .topbar-title strong { color: var(--orange); text-transform: uppercase; letter-spacing: .04em; }
 .topbar-title span { font-size: .8rem; color: #bbb; }
 .topbar-nav { display: flex; gap: 4px; }
-.tab { background: none; border: 1px solid #444; color: #ddd; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: .85rem; cursor: pointer; }
+.tab { white-space: nowrap; background: none; border: 1px solid #444; color: #ddd; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: .85rem; cursor: pointer; }
 .tab.active { background: var(--orange); border-color: var(--orange); color: #000; font-weight: 600; }
 .topbar .link { color: #ddd; }
 
@@ -86,8 +86,9 @@ main { max-width: 1100px; margin: 0 auto; padding: 16px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
 .card.sponsored:not(.is-mine) { opacity: .6; }
 .card.is-mine { border: 2px solid var(--orange); }
-.photo { display: block; width: 100%; aspect-ratio: 1; padding: 0; border: 0; background: #eee; cursor: zoom-in; }
-.photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo { position: relative; display: block; width: 100%; aspect-ratio: 3 / 4; padding: 0; border: 0; background: #fff; cursor: zoom-in; border-bottom: 1px solid var(--line); }
+.photo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.photo .zoom { position: absolute; right: 8px; bottom: 8px; background: rgba(0,0,0,.7); color: #fff; font-size: .75rem; padding: 4px 8px; border-radius: 999px; }
 .photo.placeholder { display: grid; place-items: center; font-size: 3rem; cursor: default; }
 .card-body { padding: 12px 14px 14px; display: flex; flex-direction: column; flex: 1; }
 .card-body h3 { font-size: 1.05rem; margin: 0; }
@@ -105,6 +106,9 @@ main { max-width: 1100px; margin: 0 auto; padding: 16px; }
 .letter span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-style: italic; font-size: .9rem; }
 .letter em { display: block; font-style: normal; font-size: .8rem; font-weight: 600; color: var(--orange-dark); margin-top: 4px; }
 .letter-full { white-space: pre-line; font-style: italic; text-align: left; background: #fff8f1; border-radius: 10px; padding: 12px; }
+
+.notice { background: #fff1e5; border-radius: var(--radius); padding: 12px 14px; }
+.badge-count { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: var(--danger); color: #fff; font-size: .75rem; line-height: 20px; text-align: center; }
 
 /* Painel */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
@@ -128,7 +132,7 @@ dialog label { display: flex; flex-direction: column; gap: 4px; font-weight: 600
 dialog input { font-weight: 400; }
 .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
 .photo-dialog { width: min(640px, calc(100vw - 32px)); text-align: center; }
-.photo-dialog img { width: 100%; border-radius: 10px; margin-bottom: 12px; }
+.photo-dialog img { width: 100%; max-height: 75vh; object-fit: contain; border-radius: 10px; margin-bottom: 12px; }
 
 .toast {
   position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);

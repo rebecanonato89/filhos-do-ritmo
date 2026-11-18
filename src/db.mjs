@@ -18,6 +18,7 @@ export function openDb(file) {
       pants_size    TEXT,
       shoe_size     TEXT,
       letter        TEXT,
+      age           TEXT,
       sponsor_email TEXT,
       sponsor_name  TEXT,
       sponsor_phone TEXT,
@@ -46,6 +47,7 @@ export function openDb(file) {
   // Banco de produção criado antes da coluna da cartinha existir.
   const cols = db.prepare('PRAGMA table_info(children)').all().map((c) => c.name);
   if (!cols.includes('letter')) db.exec('ALTER TABLE children ADD COLUMN letter TEXT');
+  if (!cols.includes('age')) db.exec('ALTER TABLE children ADD COLUMN age TEXT');
   return db;
 }
 
@@ -112,14 +114,14 @@ export function setDelivered(db, id, delivered) {
 /** Upsert por (turma, nome). Nunca toca nos campos de apadrinhamento/entrega. */
 export function upsertChild(db, c) {
   db.prepare(
-    `INSERT INTO children (class_name, name, photo, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size, letter)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO children (class_name, name, photo, gift_1, gift_2, gift_3, shirt_size, pants_size, shoe_size, letter, age)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(class_name, name) DO UPDATE SET
        photo = excluded.photo, gift_1 = excluded.gift_1, gift_2 = excluded.gift_2, gift_3 = excluded.gift_3,
        shirt_size = excluded.shirt_size, pants_size = excluded.pants_size, shoe_size = excluded.shoe_size,
-       letter = excluded.letter`,
+       letter = excluded.letter, age = excluded.age`,
   ).run(
-    ...['class_name', 'name', 'photo', 'gift_1', 'gift_2', 'gift_3', 'shirt_size', 'pants_size', 'shoe_size', 'letter'].map((k) => c[k] ?? null),
+    ...['class_name', 'name', 'photo', 'gift_1', 'gift_2', 'gift_3', 'shirt_size', 'pants_size', 'shoe_size', 'letter', 'age'].map((k) => c[k] ?? null),
   );
 }
 
