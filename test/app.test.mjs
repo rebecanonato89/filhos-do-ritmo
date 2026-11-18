@@ -98,7 +98,7 @@ test('path traversal em fotos não escapa da pasta', async () => {
 
 test('apadrinhar: valida dados, bloqueia segundo padrinho e esconde dados de terceiros', async () => {
   const ana = (await (await get('/api/children', alice)).json()).find((c) => c.name === 'Ana');
-  assert.equal(ana.letter, 'Querido padrinho');
+  assert.ok(!('letter' in ana), 'cartinha não tem texto livre')
   assert.equal(ana.age, '8');
 
   assert.equal((await post(`/api/children/${ana.id}/sponsor`, alice, { name: 'Al', phone: '35999999999' })).status, 400);

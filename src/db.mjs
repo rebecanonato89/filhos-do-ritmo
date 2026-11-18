@@ -50,6 +50,8 @@ export function openDb(file) {
   if (!cols.includes('letter')) db.exec('ALTER TABLE children ADD COLUMN letter TEXT');
   if (!cols.includes('age')) db.exec('ALTER TABLE children ADD COLUMN age TEXT');
   if (!cols.includes('letter_photo')) db.exec('ALTER TABLE children ADD COLUMN letter_photo TEXT');
+  // A cartinha real não tem texto livre; limpa o que os primeiros exemplos gravaram.
+  db.exec('UPDATE children SET letter = NULL WHERE letter IS NOT NULL');
   return db;
 }
 

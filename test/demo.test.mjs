@@ -43,8 +43,8 @@ test('banco antigo sem coluna letter é migrado ao abrir', () => {
     INSERT INTO children (class_name, name) VALUES ('T', 'Antiga');`);
   old.close();
   const db = openDb(file);
-  upsertChild(db, { class_name: 'T', name: 'Antiga', letter: 'Oi' });
-  assert.equal(listChildren(db)[0].letter, 'Oi');
+  upsertChild(db, { class_name: 'T', name: 'Antiga', age: '9' });
+  assert.equal(listChildren(db)[0].age, '9');
 });
 
 test('banco antigo ganha a coluna age ao abrir', () => {
