@@ -18,7 +18,7 @@
 </head>
 <body>
   <header class="topbar" id="topbar" hidden>
-    <button type="button" class="brand" data-view="sponsor" title="Ver cartinhas">
+    <button type="button" class="brand" data-view="sponsor" data-tip="Ver todas as cartinhas" data-tip-pos="below">
       <img src="/logo.jpg" alt="" class="topbar-logo">
       <span class="topbar-title">
         <strong>Filhos do Ritmo</strong>
@@ -27,12 +27,12 @@
     </button>
     <nav class="topbar-nav" id="topNav">
       <button type="button" data-view="sponsor" class="tab active">Cartinhas</button>
-      <button type="button" data-view="mine" class="tab">Minhas <span class="badge-count soft" data-badge="mine" hidden></span></button>
-      <button type="button" data-view="admin" class="tab" data-admin hidden>Painel <span class="badge-count" data-badge="pending" title="Acessos aguardando liberação" hidden></span></button>
+      <button type="button" data-view="mine" class="tab" data-tip="Crianças que você apadrinhou" data-tip-pos="below">Minhas <span class="badge-count soft" data-badge="mine" hidden></span></button>
+      <button type="button" data-view="admin" class="tab" data-admin hidden data-tip="Gestão: crianças, entregas e acessos" data-tip-pos="below">Painel <span class="badge-count" data-badge="pending" hidden></span></button>
     </nav>
-    <a class="social social-first" href="https://www.instagram.com/filhos.do.ritmo/" target="_blank" rel="noopener" title="Instagram @filhos.do.ritmo" aria-label="Instagram do Filhos do Ritmo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.9.9 1.4.2.4.4 1.1.4 2.2.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.9.7-1.4.9-.4.2-1.1.4-2.2.4-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.9-.9-1.4-.2-.4-.4-1.1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.9-.7 1.4-.9.4-.2 1.1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 1.8c-3.1 0-3.5 0-4.7.1-1.1.1-1.7.2-2.1.4-.5.2-.9.4-1.2.8-.4.4-.6.7-.8 1.2-.2.4-.3 1-.4 2.1C2.7 9.6 2.7 10 2.7 12s0 2.4.1 3.6c.1 1.1.2 1.7.4 2.1.2.5.4.9.8 1.2.4.4.7.6 1.2.8.4.2 1 .3 2.1.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c1.1-.1 1.7-.2 2.1-.4.5-.2.9-.4 1.2-.8.4-.4.6-.7.8-1.2.2-.4.3-1 .4-2.1.1-1.2.1-1.6.1-3.6s0-2.4-.1-3.6c-.1-1.1-.2-1.7-.4-2.1-.2-.5-.4-.9-.8-1.2-.4-.4-.7-.6-1.2-.8-.4-.2-1-.3-2.1-.4C15.5 4 15.1 4 12 4zm0 3.1a4.9 4.9 0 1 1 0 9.8 4.9 4.9 0 0 1 0-9.8zm0 8.1a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zm6.2-8.3a1.1 1.1 0 1 1-2.3 0 1.1 1.1 0 0 1 2.3 0z"/></svg></a>
-    <a class="social" href="https://www.facebook.com/people/Filhos-do-Ritmo/61577747045518/" target="_blank" rel="noopener" title="Facebook do Filhos do Ritmo" aria-label="Facebook do Filhos do Ritmo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M13.5 21v-7.6h2.6l.4-3h-3V8.5c0-.9.3-1.5 1.5-1.5h1.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3.1z"/></svg></a>
-    <a class="social" href="https://linktr.ee/filhos.ritmo" target="_blank" rel="noopener" title="Todos os links do Filhos do Ritmo" aria-label="Linktree do Filhos do Ritmo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v18M4.5 7.5l15 9M19.5 7.5l-15 9"/></svg></a>
+    <a class="social social-first" href="https://www.instagram.com/filhos.do.ritmo/" target="_blank" rel="noopener" data-tip="Instagram @filhos.do.ritmo" data-tip-pos="below" aria-label="Instagram do Filhos do Ritmo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.9.9 1.4.2.4.4 1.1.4 2.2.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.9.7-1.4.9-.4.2-1.1.4-2.2.4-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.9-.9-1.4-.2-.4-.4-1.1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.9-.7 1.4-.9.4-.2 1.1-.4 2.2-.4C8.4 2.2 8.8 2.2 12 2.2zm0 1.8c-3.1 0-3.5 0-4.7.1-1.1.1-1.7.2-2.1.4-.5.2-.9.4-1.2.8-.4.4-.6.7-.8 1.2-.2.4-.3 1-.4 2.1C2.7 9.6 2.7 10 2.7 12s0 2.4.1 3.6c.1 1.1.2 1.7.4 2.1.2.5.4.9.8 1.2.4.4.7.6 1.2.8.4.2 1 .3 2.1.4 1.2.1 1.6.1 4.7.1s3.5 0 4.7-.1c1.1-.1 1.7-.2 2.1-.4.5-.2.9-.4 1.2-.8.4-.4.6-.7.8-1.2.2-.4.3-1 .4-2.1.1-1.2.1-1.6.1-3.6s0-2.4-.1-3.6c-.1-1.1-.2-1.7-.4-2.1-.2-.5-.4-.9-.8-1.2-.4-.4-.7-.6-1.2-.8-.4-.2-1-.3-2.1-.4C15.5 4 15.1 4 12 4zm0 3.1a4.9 4.9 0 1 1 0 9.8 4.9 4.9 0 0 1 0-9.8zm0 8.1a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zm6.2-8.3a1.1 1.1 0 1 1-2.3 0 1.1 1.1 0 0 1 2.3 0z"/></svg></a>
+    <a class="social" href="https://www.facebook.com/people/Filhos-do-Ritmo/61577747045518/" target="_blank" rel="noopener" data-tip="Facebook do Filhos do Ritmo" data-tip-pos="below" aria-label="Facebook do Filhos do Ritmo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor"><path d="M13.5 21v-7.6h2.6l.4-3h-3V8.5c0-.9.3-1.5 1.5-1.5h1.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H7.8v3h2.6V21h3.1z"/></svg></a>
+    <a class="social" href="https://linktr.ee/filhos.ritmo" target="_blank" rel="noopener" data-tip="Todos os links do Filhos do Ritmo" data-tip-pos="below" aria-label="Linktree do Filhos do Ritmo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v18M4.5 7.5l15 9M19.5 7.5l-15 9"/></svg></a>
     <button type="button" class="link logout-desktop" data-logout>Sair</button>
     <p class="topbar-notice" id="topNotice" hidden>🎁 Escolha <strong>1 ou mais</strong> das 3 opções de presente · 📦 Entrega até <strong>01/12</strong></p>
   </header>
@@ -87,10 +87,10 @@
     <section id="adminView" hidden>
       <div class="admin-head">
         <div class="segmented" role="tablist">
-          <button type="button" class="seg active" data-panel="kids" role="tab">👧 Crianças <span class="seg-count" id="kidsCount"></span></button>
-          <button type="button" class="seg" data-panel="users" role="tab">🔑 Acessos <span class="badge-count" data-badge="pending" hidden></span></button>
+          <button type="button" class="seg active" data-panel="kids" role="tab" data-tip="Cartinhas, padrinhos e entregas">👧 Crianças <span class="seg-count" id="kidsCount"></span></button>
+          <button type="button" class="seg" data-panel="users" role="tab" data-tip="Liberar ou bloquear padrinhos">🔑 Acessos <span class="badge-count" data-badge="pending" hidden></span></button>
         </div>
-        <button type="button" class="icon-btn" id="uploadBtn" title="Carregar planilha e fotos" aria-label="Carregar planilha e fotos">📥</button>
+        <button type="button" class="icon-btn" id="uploadBtn" data-tip="Carregar planilha e fotos" aria-label="Carregar planilha e fotos">📥</button>
       </div>
       <div id="panelKids">
       <div class="stats" id="stats"></div>

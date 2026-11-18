@@ -247,3 +247,13 @@ test('gestor cadastra nova criança sem planilha; padrinho não pode', async () 
   assert.equal(c.status, 'available');
   assert.equal((await post('/api/admin/children', admin, body)).status, 409, 'duplicada');
 });
+
+test('HTML aponta para CSS/JS versionados e esses ficam em cache longo', async () => {
+  const html = await (await get('/')).text();
+  const css = html.match(/\/styles\.css\?v=([0-9a-f]{10})"/);
+  const js = html.match(/\/app\.js\?v=([0-9a-f]{10})"/);
+  assert.ok(css && js, 'links versionados');
+  const r = await get(`/styles.css?v=${css[1]}`);
+  assert.match(r.headers.get('cache-control'), /immutable/);
+  assert.match((await get('/')).headers.get('cache-control'), /no-cache/);
+});

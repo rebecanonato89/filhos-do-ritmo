@@ -1,5 +1,5 @@
 import { readFile, stat, writeFile, unlink } from 'node:fs/promises';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import { childrenFromCsv } from './csv.mjs';
 import { createReadStream } from 'node:fs';
 import { join, basename, extname } from 'node:path';
@@ -126,6 +126,16 @@ function childView(c, user, isAdmin) {
   return base;
 }
 
+let assetVersionPromise;
+function assetVersion() {
+  assetVersionPromise ??= Promise.all(['app.js', 'styles.css'].map((f) => readFile(join(PUBLIC_DIR, f)))).then((bufs) => {
+    const hash = createHash('sha256');
+    for (const b of bufs) hash.update(b);
+    return hash.digest('hex').slice(0, 10);
+  });
+  return assetVersionPromise;
+}
+
 export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }) {
   const isAdmin = (user) => config.adminEmails.includes(user.email);
   const canSee = (user) => isAdmin(user) || !config.requireApproval || db_.isApproved(db, user.email);
@@ -161,8 +171,16 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
 
     if (method === 'GET' && STATIC[path]) {
       const [file, type] = STATIC[path];
-      const body = await readFile(join(PUBLIC_DIR, file));
-      return send(res, 200, body, { 'Content-Type': type, 'Cache-Control': path === '/' ? 'no-cache' : 'public, max-age=300' });
+      let body = await readFile(join(PUBLIC_DIR, file));
+      if (path === '/') {
+        // Versão no endereço do CSS/JS: após cada deploy o navegador busca os arquivos novos
+        // em vez de misturar HTML novo com CSS/JS antigos do cache.
+        const v = await assetVersion();
+        body = body.toString().replace('/styles.css"', `/styles.css?v=${v}"`).replace('/app.js"', `/app.js?v=${v}"`);
+        return send(res, 200, body, { 'Content-Type': type, 'Cache-Control': 'no-cache' });
+      }
+      const versioned = url.searchParams.has('v') && (path === '/app.js' || path === '/styles.css');
+      return send(res, 200, body, { 'Content-Type': type, 'Cache-Control': versioned ? 'public, max-age=31536000, immutable' : 'public, max-age=300' });
     }
 
     if (method === 'GET' && path === '/health') return json(res, 200, { ok: true });
