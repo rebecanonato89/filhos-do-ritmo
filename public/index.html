@@ -109,7 +109,8 @@
         </select>
         <select id="adminClass"><option value="">Todas as turmas</option></select>
         <input type="search" id="adminSearch" placeholder="Buscar criança ou padrinho">
-        <a class="btn btn-small" href="/api/admin/export.csv">Exportar planilha</a>
+        <button type="button" class="btn btn-small" id="newChildBtn">➕ Nova criança</button>
+        <a class="btn btn-small btn-ghost" href="/api/admin/export.csv">Exportar planilha</a>
       </div>
       <div class="table-wrap">
         <table class="table">
@@ -192,7 +193,8 @@
     <form method="dialog" id="editForm">
       <h2 id="editTitle">Editar</h2>
       <div class="edit-grid" id="editFields"></div>
-      <div class="edit-images">
+      <p class="muted small" id="editNewHint" hidden>Depois de salvar, você poderá adicionar a foto da criança e a foto da cartinha.</p>
+      <div class="edit-images" id="editImages">
         <button type="button" class="btn btn-ghost btn-small" id="editPhoto">📷 Trocar foto</button>
         <button type="button" class="btn btn-ghost btn-small" id="editLetter">✉️ Trocar cartinha</button>
       </div>

@@ -208,7 +208,9 @@ function renderAdmin() {
     ...rows.map((c) =>
       h('tr', { class: c.status },
         h('td', { 'data-label': 'Turma' }, c.class_name),
-        h('td', { 'data-label': 'Criança', class: 'cell-title' }, c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age})`) : ''),
+        h('td', { 'data-label': 'Criança', class: 'cell-title' },
+          h('button', { type: 'button', class: 'pencil pencil-sm', onclick: () => openEdit(c), title: 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, '✏️'),
+          c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age})`) : ''),
         h('td', { class: 'nowrap', 'data-label': 'Imagens' },
           h('button', { type: 'button', class: `img-btn${c.photo_url ? ' has' : ''}`, title: 'Enviar foto da criança', onclick: () => pickOne(c, 'photo') }, '📷'),
           h('button', { type: 'button', class: `img-btn${c.letter_photo_url ? ' has' : ''}`, title: 'Enviar foto da cartinha', onclick: () => pickOne(c, 'letter') }, '✉️'),
@@ -332,13 +334,16 @@ const EDIT_FIELDS = [
 ];
 
 function openEdit(c) {
+  // c = null → nova criança; as imagens entram depois de salvar (precisam de um id).
   state.editing = c;
-  const values = {
+  const values = c ? {
     class_name: c.class_name, name: c.name, age: c.age,
     gift_1: c.gifts[0], gift_2: c.gifts[1], gift_3: c.gifts[2],
     shirt_size: c.sizes.shirt, pants_size: c.sizes.pants, shoe_size: c.sizes.shoe,
-  };
-  $('editTitle').textContent = `Editar ${c.name}`;
+  } : { class_name: $('adminClass')?.value || '' };
+  $('editTitle').textContent = c ? `Editar ${c.name}` : 'Nova criança';
+  $('editImages').hidden = !c;
+  $('editNewHint').hidden = !!c;
   $('editFields').replaceChildren(...EDIT_FIELDS.map(([k, label]) =>
     h('label', { class: k.endsWith('size') || k === 'age' ? 'short' : '' }, label,
       h('input', { name: k, value: values[k] || '', maxlength: '120', required: k === 'class_name' || k === 'name' }))));
@@ -352,9 +357,14 @@ async function submitEdit(ev) {
   ev.preventDefault();
   const body = Object.fromEntries(new FormData($('editForm')));
   try {
-    await api(`/api/admin/children/${state.editing.id}`, { method: 'POST', body });
+    const saved = await api(state.editing ? `/api/admin/children/${state.editing.id}` : '/api/admin/children', { method: 'POST', body });
+    const isNew = !state.editing;
     $('editDialog').close();
-    toast('Cartinha atualizada');
+    toast(isNew ? `${saved.name} cadastrada — agora adicione a foto e a cartinha` : 'Cartinha atualizada');
+    if (isNew) {
+      await refresh();
+      return openEdit(state.children.find((c) => c.id === saved.id) || saved);
+    }
   } catch (err) {
     $('editError').textContent = err.message;
     $('editError').hidden = false;
@@ -499,6 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('dlgCancel').addEventListener('click', () => $('sponsorDialog').close());
   $('photoClose').addEventListener('click', () => $('photoDialog').close());
   $('editForm').addEventListener('submit', submitEdit);
+  $('newChildBtn').addEventListener('click', () => openEdit(null));
   $('editCancel').addEventListener('click', () => $('editDialog').close());
   $('csvInput').addEventListener('change', (e) => e.target.files[0] && importCsv(e.target.files[0]).finally(() => (e.target.value = '')));
   for (const [id, kind] of [['photoInput', 'photo'], ['letterInput', 'letter']]) {
