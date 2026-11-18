@@ -37,6 +37,23 @@ SESSION_SECRET=$(openssl rand -hex 32) ADMIN_EMAILS=voce@gmail.com npm start   #
 
 Push na `main`: testes, imagem no Docker Hub, deploy em `~/filhos-do-ritmo` na VPS, usando o Traefik do allrev.
 
+## Transcrever as cartinhas com o Claude Code (local)
+Sem planilha? O Claude Code lê as fotos das cartinhas no seu computador e gera tudo pronto para o Painel.
+
+1. Na raiz deste repositório, crie a pasta `cartinhas/` (ela está no `.gitignore` e **nunca** vai para o Git):
+   ```
+   cartinhas/Turma 1/cartinhas/   ← fotos das cartinhas
+   cartinhas/Turma 1/fotos/       ← fotos das crianças
+   cartinhas/Turma 2/...
+   ```
+2. Rode `claude` na raiz do repositório e peça: **/transcrever-cartinhas**. Ele lê cada cartinha, casa com a foto da criança e grava `dados.json` por turma.
+3. O montador (`node tools/montar-saida.mjs cartinhas`) gera `cartinhas/_saida/` com:
+   - `planilha.csv`
+   - `fotos/<Nome>.jpg` e `cartinhas/<Nome>.jpg`
+   - `revisao.html`
+4. **Abra `revisao.html` e confira**, principalmente o que estiver em laranja (letra duvidosa ou foto com casamento incerto). Corrija no `dados.json` e rode o montador de novo.
+5. Suba no Painel (passos abaixo): planilha, depois a pasta `fotos`, depois a pasta `cartinhas`.
+
 ## Carga das crianças (pelo Painel, sem SSH)
 Em **Painel → 📥 Carregar planilha e fotos**:
 1. **Planilha CSV** com as colunas `Turma; Nome; Idade; Pedido 1; Pedido 2; Pedido 3; Camisa; Calça; Tênis`. Aceita CSV do Excel (Windows-1252) ou UTF-8. Pode importar de novo para corrigir dados: isso atualiza por (turma, nome) e nunca apaga apadrinhamento, entrega nem imagens.

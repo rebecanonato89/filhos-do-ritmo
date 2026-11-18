@@ -4,3 +4,8 @@ data
 *.csv
 fotos
 /photos/
+
+# Material das cartinhas (fotos reais) nunca entra no git
+/cartinhas/
+/entrada/
+/saida/
