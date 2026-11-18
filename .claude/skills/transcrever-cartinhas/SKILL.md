@@ -73,11 +73,26 @@ node tools/montar-saida.mjs cartinhas
 
 Processe uma turma por vez e mostre o progresso. Se o contexto ficar grande, termine a turma atual, rode o montador e continue a próxima numa nova leitura.
 
-## Depois da revisão (a usuária faz no portal)
+## Enviar ao portal (só depois da revisão e com confirmação explícita)
 
-Painel → **📥 Carregar planilha e fotos**:
+Pré-requisito (uma vez): arquivo `.env.portal` na raiz do repositório com `FDR_TOKEN=<valor do secret ADMIN_API_TOKEN>`, e dependências das ferramentas instaladas com `npm install --prefix tools`. Se faltar, peça para a usuária criar. **Nunca** escreva, mostre ou commite o valor da chave.
+
+1. Pergunte se a usuária revisou o `revisao.html` e resolveu as dúvidas. Sem um "sim" explícito, **não envie**.
+2. Rode a **simulação** e mostre o resumo (quantas crianças, quantas imagens, quais não casaram):
+   ```bash
+   node tools/enviar-portal.mjs cartinhas/_saida
+   ```
+3. Peça confirmação explícita ("posso enviar?"). Só então:
+   ```bash
+   node tools/enviar-portal.mjs cartinhas/_saida --enviar
+   ```
+4. Mostre o resultado. Imagens que não casaram (nome repetido entre turmas) são resolvidas pelo ✏️ no Painel.
+
+O script aplica a marca d'água, remove o GPS e reduz as imagens **no computador** antes de enviar; aceita HEIC do iPhone. Reenviar é seguro: a planilha atualiza por turma+nome sem apagar apadrinhamentos, e cada imagem enviada substitui a anterior da mesma criança.
+
+## Alternativa manual (pelo Painel)
+
+Painel → **📥** (Carregar planilha e fotos):
 1. Planilha: `cartinhas/_saida/planilha.csv`
 2. Fotos das crianças: todos os arquivos de `cartinhas/_saida/fotos/`
 3. Fotos das cartinhas: todos os arquivos de `cartinhas/_saida/cartinhas/`
-
-A marca d'água é aplicada no navegador durante o envio. O montador tira as marcações `[?]` da planilha e dos nomes de arquivo, mas elas continuam destacadas na revisão. **Resolva as dúvidas antes de subir**, principalmente as de nome.

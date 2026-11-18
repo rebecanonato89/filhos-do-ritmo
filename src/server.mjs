@@ -16,6 +16,7 @@ const config = {
   googleClientSecret: env.GOOGLE_CLIENT_SECRET || '',
   adminEmails: (env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean),
   requireApproval: env.REQUIRE_APPROVAL !== 'false',
+  apiToken: env.ADMIN_API_TOKEN || '',
   photosDir: join(dataDir, 'photos'),
 };
 

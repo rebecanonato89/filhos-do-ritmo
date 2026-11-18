@@ -9,3 +9,5 @@ fotos
 /cartinhas/
 /entrada/
 /saida/
+/tools/node_modules/
+.env.portal

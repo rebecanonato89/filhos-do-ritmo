@@ -27,6 +27,7 @@ before(async () => {
     googleClientSecret: 'secret',
     adminEmails: [ADMIN],
     requireApproval: true,
+    apiToken: 't'.repeat(40),
     photosDir,
   };
   // O "Google" de teste devolve o e-mail passado como code.
@@ -256,4 +257,13 @@ test('HTML aponta para CSS/JS versionados e esses ficam em cache longo', async (
   const r = await get(`/styles.css?v=${css[1]}`);
   assert.match(r.headers.get('cache-control'), /immutable/);
   assert.match((await get('/')).headers.get('cache-control'), /no-cache/);
+});
+
+test('chave de automação: com token certo age como gestor; errado ou ausente é recusado', async () => {
+  const tok = (t) => ({ authorization: `Bearer ${t}` });
+  assert.equal((await fetch(`${base}/api/children`, { headers: tok('t'.repeat(40)) })).status, 200);
+  assert.equal((await fetch(`${base}/api/children`, { headers: tok('x'.repeat(40)) })).status, 401);
+  assert.equal((await fetch(`${base}/api/children`, { headers: tok('t') })).status, 401);
+  const r = await fetch(`${base}/api/admin/import`, { method: 'POST', headers: { ...tok('t'.repeat(40)), 'Content-Type': 'text/csv' }, body: 'Turma;Nome\nTurma 9;Via Token\n' });
+  assert.equal(r.status, 200);
 });

@@ -55,12 +55,13 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           ADMIN_EMAILS: ${{ secrets.ADMIN_EMAILS }}
+          ADMIN_API_TOKEN: ${{ secrets.ADMIN_API_TOKEN }}
           IMAGE_TAG: ${{ github.sha }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          envs: DOCKER_USERNAME,SESSION_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,ADMIN_EMAILS,IMAGE_TAG
+          envs: DOCKER_USERNAME,SESSION_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,ADMIN_EMAILS,ADMIN_API_TOKEN,IMAGE_TAG
           script: |
             set -e
             cd /home/${{ secrets.VPS_USER }}/filhos-do-ritmo
@@ -72,6 +73,7 @@ jobs:
               echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
               echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET"
               echo "ADMIN_EMAILS=$ADMIN_EMAILS"
+              echo "ADMIN_API_TOKEN=$ADMIN_API_TOKEN"
             } > .env
             docker compose pull
             docker compose up -d --remove-orphans

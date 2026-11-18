@@ -12,6 +12,7 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       ADMIN_EMAILS: ${ADMIN_EMAILS:?}
       REQUIRE_APPROVAL: ${REQUIRE_APPROVAL:-true}
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
     volumes:
       - filhos_data:/data
     labels:
