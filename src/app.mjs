@@ -15,6 +15,10 @@ const STATIC = {
   '/logo.jpg': ['logo.jpg', 'image/jpeg'],
   '/icon.png': ['icon.png', 'image/png'],
   '/watermark.png': ['watermark.png', 'image/png'],
+  '/icon-192.png': ['icon-192.png', 'image/png'],
+  '/icon-512.png': ['icon-512.png', 'image/png'],
+  '/pix-qr.png': ['pix-qr.png', 'image/png'],
+  '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json; charset=utf-8'],
 };
 
 const PHOTO_TYPES = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
@@ -258,6 +262,28 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
       db_.releaseChild(db, id);
       console.log(`release child=${id} by=${admin.email} previous_sponsor=${before.sponsor_email}`);
       return json(res, 200, { ok: true });
+    }
+
+    if (method === 'POST' && (m = path.match(/^\/api\/admin\/children\/(\d+)$/))) {
+      const admin = requireAdmin(req);
+      const id = Number(m[1]);
+      if (!db_.getChild(db, id)) throw new HttpError(404, 'Criança não encontrada');
+      const body = await readJson(req);
+      const data = {};
+      for (const k of db_.EDITABLE) {
+        const v = String(body[k] ?? '').replace(/\s+/g, ' ').trim();
+        if (v.length > 120) throw new HttpError(400, 'Texto grande demais');
+        data[k] = v || null;
+      }
+      if (!data.class_name || !data.name) throw new HttpError(400, 'Turma e nome são obrigatórios');
+      try {
+        db_.updateChild(db, id, data);
+      } catch (err) {
+        if (/UNIQUE/.test(err.message)) throw new HttpError(409, 'Já existe uma criança com esse nome nessa turma');
+        throw err;
+      }
+      console.log(`edit child=${id} by=${admin.email}`);
+      return json(res, 200, childView(db_.getChild(db, id), admin, true));
     }
 
     if (method === 'POST' && path === '/api/admin/import') {
