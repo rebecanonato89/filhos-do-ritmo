@@ -146,7 +146,7 @@ function card(c) {
 }
 
 function renderSponsor() {
-  const mine = state.children.filter((c) => c.mine);
+  const mine = state.children.filter((c) => c.mine).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   const onlyMine = state.view === 'mine';
   // 'Minhas' só aparece na aba Minhas: a tela Cartinhas mostra a lista inteira para apadrinhar mais.
   $('mine').hidden = !(onlyMine && mine.length);
@@ -156,7 +156,7 @@ function renderSponsor() {
   document.querySelectorAll('[data-badge=mine]').forEach((b) => { b.textContent = mine.length; b.hidden = !mine.length; });
   if (onlyMine) return;
 
-  const classes = [...new Set(state.children.map((c) => c.class_name))];
+  const classes = [...new Set(state.children.map((c) => c.class_name))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   $('classChips').replaceChildren(
     ...['', ...classes].map((cl) =>
       h('button', { type: 'button', class: `chip${cl ? ' chip-class' : ''}${state.classFilter === cl ? ' active' : ''}`, vars: cl ? classColor(cl) : null, onclick: () => { state.classFilter = cl; renderSponsor(); } }, cl || 'Todas'),
@@ -165,7 +165,6 @@ function renderSponsor() {
 
   const onlyAvailable = $('onlyAvailable').checked;
   const [ageMin, ageMax] = ($('ageFilter').value || '0-999').split('-').map(Number);
-  const gender = $('genderFilter').value;
   const visible = state.children.filter((c) => {
     if (state.classFilter && c.class_name !== state.classFilter) return false;
     if (onlyAvailable && c.status !== 'available') return false;
@@ -173,7 +172,6 @@ function renderSponsor() {
       const age = parseInt(c.age, 10);
       if (!(age >= ageMin && age <= ageMax)) return false;
     }
-    if (gender && c.gender !== gender) return false;
     return true;
   });
   const available = state.children.filter((c) => c.status === 'available').length;
@@ -181,16 +179,21 @@ function renderSponsor() {
     ? `${available} de ${state.children.length} crianças ainda esperando um padrinho`
     : 'As cartinhas ainda estão sendo cadastradas. Volte em breve!';
 
+  const byName = (a, b) => a.name.localeCompare(b.name, 'pt-BR');
   const groups = new Map();
   for (const c of visible) {
     if (!groups.has(c.class_name)) groups.set(c.class_name, []);
     groups.get(c.class_name).push(c);
   }
+  for (const list of groups.values()) list.sort(byName);
   $('classes').replaceChildren(
-    ...[...groups].map(([cl, list]) => h('section', { class: 'class-group', vars: classColor(cl) },
-      h('h2', { class: 'class-band' }, h('span', {}, cl),
-        h('span', { class: 'class-count' }, `${list.length} ${list.length === 1 ? 'criança' : 'crianças'} · ${list.filter((c) => c.status === 'available').length} disponíveis`)),
-      h('div', { class: 'grid' }, list.map(card)))),
+    ...classes.filter((cl) => groups.has(cl)).map((cl) => {
+      const list = groups.get(cl);
+      return h('section', { class: 'class-group', vars: classColor(cl) },
+        h('h2', { class: 'class-band' }, h('span', {}, cl),
+          h('span', { class: 'class-count' }, `${list.length} ${list.length === 1 ? 'criança' : 'crianças'} · ${list.filter((c) => c.status === 'available').length} disponíveis`)),
+        h('div', { class: 'grid' }, list.map(card)));
+    }),
   );
 }
 
@@ -633,7 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
   for (const [id, kind] of [['photoInput', 'photo'], ['letterInput', 'letter']]) {
     $(id).addEventListener('change', (e) => bulkUpload([...e.target.files], kind).finally(() => (e.target.value = '')));
   }
-  for (const id of ['onlyAvailable', 'ageFilter', 'genderFilter']) $(id).addEventListener('change', renderSponsor);
+  for (const id of ['onlyAvailable', 'ageFilter']) $(id).addEventListener('change', renderSponsor);
   for (const id of ['adminFilter', 'adminClass']) $(id).addEventListener('change', renderAdmin);
   $('adminSearch').addEventListener('input', renderAdmin);
   $('recheckBtn').addEventListener('click', () => location.reload());
