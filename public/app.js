@@ -148,7 +148,8 @@ function card(c) {
 function renderSponsor() {
   const mine = state.children.filter((c) => c.mine);
   const onlyMine = state.view === 'mine';
-  $('mine').hidden = !mine.length;
+  // 'Minhas' só aparece na aba Minhas: a tela Cartinhas mostra a lista inteira para apadrinhar mais.
+  $('mine').hidden = !(onlyMine && mine.length);
   $('mineGrid').replaceChildren(...mine.map(card));
   $('mineEmpty').hidden = !(onlyMine && !mine.length);
   for (const id of ['sponsorToolbar', 'counter', 'classes']) $(id).hidden = onlyMine;
