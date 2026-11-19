@@ -121,18 +121,17 @@ function card(c) {
       h('span', { class: 'lc-class', vars: classColor(c.class_name) }, c.class_name),
       state.me.is_admin ? h('button', { type: 'button', class: 'pencil', onclick: () => openEdit(c), 'data-tip': 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, '✏️') : null,
       c.letter_photo_url
-        ? h('button', { type: 'button', class: 'envelope', onclick: () => openImage(c, 'letter'), 'data-tip': 'Ver a cartinha original' }, h('span', { 'aria-hidden': 'true' }, '✉️'), ' Ver cartinha')
+        ? h('button', { type: 'button', class: 'envelope', onclick: () => openImage(c, 'letter'), 'data-tip': 'Ver a cartinha original', 'aria-label': `Ver a cartinha de ${c.name}` }, h('span', { 'aria-hidden': 'true' }, '✉️'), ' Cartinha')
         : null,
     ),
     h('p', { class: 'lc-dear' }, 'Querido Papai Noel...'),
-    h('div', { class: 'lc-top' },
-      h('figure', { class: 'polaroid' }, photo, h('figcaption', {}, 'Minha foto')),
-      h('div', { class: 'lc-id' },
-        h('span', { class: 'lc-label' }, 'Meu nome é:'),
-        field(c.name, 'lc-name'),
-        h('span', { class: 'lc-label' }, 'Eu tenho ', field(c.age, 'lc-age'), ' anos.'),
-        c.gender ? h('span', { class: `gender-tag g-${c.gender}` }, c.gender === 'F' ? '👧 Menina' : '👦 Menino') : null,
-      ),
+    // Foto grande no topo (largura do card); nome e idade logo abaixo.
+    h('figure', { class: 'polaroid polaroid-big' }, photo, h('figcaption', {}, 'Minha foto')),
+    h('div', { class: 'lc-id lc-id-below' },
+      h('span', { class: 'lc-label' }, 'Meu nome é:'),
+      field(c.name, 'lc-name'),
+      h('span', { class: 'lc-label' }, 'Eu tenho ', field(c.age, 'lc-age'), ' anos.',
+        c.gender ? h('span', { class: `gender-tag g-${c.gender}` }, c.gender === 'F' ? '👧 Menina' : '👦 Menino') : null),
     ),
     h('p', { class: 'lc-q' }, 'Neste Natal, eu gostaria de ganhar:'),
     h('ol', { class: 'lc-wishes' }, c.gifts.map((g) => h('li', {}, field(g)))),
