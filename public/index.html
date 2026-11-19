@@ -104,6 +104,7 @@
           <button type="button" class="seg active" data-panel="kids" role="tab" data-tip="Cartinhas, padrinhos e entregas">👧 Crianças <span class="seg-count" id="kidsCount"></span></button>
           <button type="button" class="seg" data-panel="users" role="tab" data-tip="Liberar ou bloquear padrinhos">🔑 Acessos <span class="badge-count" data-badge="pending" hidden></span></button>
         </div>
+        <button type="button" class="btn btn-small btn-ghost demo-clear" id="clearDemoBtn" hidden data-tip="Apaga só as crianças de exemplo">🧹 Remover exemplos</button>
         <button type="button" class="icon-btn" id="uploadBtn" data-tip="Carregar planilha e fotos" aria-label="Carregar planilha e fotos">📥</button>
       </div>
       <div id="panelKids">
@@ -198,6 +199,18 @@
         <button type="submit" class="btn" id="dlgSubmit">Confirmar apadrinhamento</button>
       </div>
     </form>
+  </dialog>
+
+    <dialog id="imgDialog">
+    <h2 id="imgTitle"></h2>
+    <div class="img-current" id="imgCurrent"></div>
+    <p class="muted small">A marca d'água é aplicada no seu aparelho antes do envio e a localização (GPS) da foto é removida.</p>
+    <p class="error" id="imgError" hidden></p>
+    <div class="img-pick">
+      <label class="btn">📁 Escolher arquivo<input type="file" id="imgFile" accept="image/*" hidden></label>
+      <label class="btn btn-ghost camera-only">📸 Tirar foto<input type="file" id="imgCamera" accept="image/*" capture="environment" hidden></label>
+    </div>
+    <div class="actions"><button type="button" class="btn btn-ghost" id="imgClose">Fechar</button></div>
   </dialog>
 
   <dialog id="uploadDialog">

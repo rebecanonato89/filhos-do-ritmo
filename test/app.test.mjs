@@ -286,3 +286,14 @@ test('idade e tamanhos de 1 dígito ganham zero à esquerda; letras ficam iguais
   assert.equal(z.age, '06');
   assert.deepEqual(z.sizes, { shirt: 'P', pants: '08', shoe: '30' });
 });
+
+test('remover exemplos: só gestor; apaga só crianças demo-*', async () => {
+  upsertChild(db, { class_name: 'Turma Exemplo A', name: 'Fictícia', photo: 'demo-child-x.jpg', letter_photo: 'demo-x.jpg' });
+  const before = (await (await get('/api/children', admin)).json()).length;
+  assert.equal((await post('/api/admin/demo/clear', alice, {})).status, 403);
+  const r = await post('/api/admin/demo/clear', admin, {});
+  assert.equal((await r.json()).removed, 1);
+  const after = await (await get('/api/children', admin)).json();
+  assert.equal(after.length, before - 1);
+  assert.ok(!after.some((c) => c.name === 'Fictícia'));
+});

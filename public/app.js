@@ -70,6 +70,28 @@ function field(value, cls = '') {
   return h('span', { class: `lc-field hand ${cls}` }, value || ' ');
 }
 
+// Texto para o padrinho guardar/compartilhar (lista de compras, família). Sem foto: ela fica só no portal.
+function childSummary(c) {
+  const lines = [
+    `🎁 Natal Solidário Filhos do Ritmo`,
+    `Criança: ${c.name}${c.age ? `, ${c.age} anos` : ''} (${c.class_name})`,
+    `Pedidos (escolha 1 ou mais): ${c.gifts.map((g, i) => `${i + 1}) ${g}`).join(' · ')}`,
+  ];
+  const sz = [c.sizes.shirt && `Camiseta ${c.sizes.shirt}`, c.sizes.pants && `Calça ${c.sizes.pants}`, c.sizes.shoe && `Tênis ${c.sizes.shoe}`].filter(Boolean);
+  if (sz.length) lines.push(`Tamanhos: ${sz.join(' · ')}`);
+  lines.push('📦 Entregar até 01/12 · identifique o presente com o nome e a turma da criança.');
+  return lines.join('\n');
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Dados copiados 📋');
+  } catch {
+    toast('Não foi possível copiar neste navegador');
+  }
+}
+
 function card(c) {
   const photo = c.photo_url
     ? h('button', { type: 'button', class: 'polaroid-img', onclick: () => openImage(c, 'photo'), 'aria-label': `Ampliar foto de ${c.name}`, 'data-tip': 'Ampliar foto' },
@@ -78,7 +100,12 @@ function card(c) {
 
   let footer;
   if (c.mine) {
-    footer = h('div', { class: 'badge mine' }, c.delivered ? '✅ Sua criança · presente entregue' : '💛 Sua criança · entregar até 01/12');
+    footer = h('div', {},
+      h('div', { class: 'badge mine' }, c.delivered ? '✅ Sua criança · presente entregue' : '💛 Sua criança · entregar até 01/12'),
+      h('div', { class: 'share-row' },
+        h('a', { class: 'btn btn-small btn-whats', href: `https://wa.me/?text=${encodeURIComponent(childSummary(c))}`, target: '_blank', rel: 'noopener', 'data-tip': 'Enviar os dados para você ou sua família' }, '📲 WhatsApp'),
+        h('button', { type: 'button', class: 'btn btn-small btn-ghost', onclick: () => copyText(childSummary(c)), 'data-tip': 'Copiar os dados da cartinha' }, '📋 Copiar dados'),
+      ));
   } else if (c.status === 'sponsored') {
     footer = h('div', { class: 'badge taken' }, 'Já apadrinhada');
   } else {
@@ -112,7 +139,7 @@ function card(c) {
     sizes.some(([, , v]) => v)
       ? h('div', { class: 'lc-sizes' },
           h('p', { class: 'lc-sizes-title' }, 'Meus tamanhos'),
-          h('div', { class: 'lc-sizes-row' }, sizes.map(([icon, label, v]) =>
+          h('div', { class: 'lc-sizes-row three' }, sizes.map(([icon, label, v]) =>
             h('span', { class: 'lc-size' }, h('span', { 'aria-hidden': 'true' }, icon), ` ${label} `, field(v, 'lc-box'))))) 
       : null,
     h('div', { class: 'lc-footer' }, footer),
@@ -211,6 +238,7 @@ async function submitSponsor(ev) {
 
 function renderAdmin() {
   const all = state.children;
+  $('clearDemoBtn').hidden = !all.some((c) => /\/photos\/demo-/.test(`${c.photo_url} ${c.letter_photo_url}`));
   $('kidsCount').textContent = all.length;
   const sponsored = all.filter((c) => c.status === 'sponsored');
   const delivered = sponsored.filter((c) => c.delivered);
@@ -432,19 +460,37 @@ async function submitEdit(ev) {
   await refresh();
 }
 
+// Mostra a imagem atual e permite trocar: arquivo do PC/celular ou câmera (no celular).
 function pickOne(c, kind) {
-  const input = h('input', { type: 'file', accept: 'image/*' });
-  input.onchange = async () => {
-    if (!input.files[0]) return;
-    try {
-      await uploadImage(c, kind, input.files[0]);
-      toast(`${kind === 'letter' ? 'Cartinha' : 'Foto'} de ${c.name} enviada com marca d'água`);
-    } catch (err) {
-      toast(err.message);
-    }
+  state.imgTarget = { c, kind };
+  const url = kind === 'letter' ? c.letter_photo_url : c.photo_url;
+  const what = kind === 'letter' ? 'Cartinha' : 'Foto';
+  $('imgTitle').textContent = `${kind === 'letter' ? '✉️' : '📷'} ${what} de ${c.name}`;
+  $('imgCurrent').replaceChildren(url
+    ? h('img', { src: url, alt: `${what} atual de ${c.name}` })
+    : h('div', { class: 'img-empty' }, kind === 'letter' ? '✉️' : '📷', h('p', {}, `Ainda sem ${what.toLowerCase()}`)));
+  $('imgError').hidden = true;
+  $('imgDialog').showModal();
+}
+
+async function onImagePicked(ev) {
+  const file = ev.target.files[0];
+  ev.target.value = '';
+  if (!file || !state.imgTarget) return;
+  const { c, kind } = state.imgTarget;
+  $('imgCurrent').classList.add('busy');
+  try {
+    await uploadImage(c, kind, file);
+    toast(`${kind === 'letter' ? 'Cartinha' : 'Foto'} de ${c.name} enviada com marca d'água`);
     await refresh();
-  };
-  input.click();
+    const fresh = state.children.find((x) => x.id === c.id) || c;
+    pickOne(fresh, kind); // mostra a nova imagem para conferir
+  } catch (err) {
+    $('imgError').textContent = err.message;
+    $('imgError').hidden = false;
+  } finally {
+    $('imgCurrent').classList.remove('busy');
+  }
 }
 
 function logLine(text, cls = '') {
@@ -551,7 +597,7 @@ async function boot() {
   document.querySelectorAll('[data-admin]').forEach((el) => (el.hidden = !state.me.is_admin));
   $('topNotice').hidden = false;
   await refresh();
-  state.timer = setInterval(() => document.visibilityState === 'visible' && !$('sponsorDialog').open && !$('editDialog').open && !$('uploadDialog').open && refresh(), POLL_MS);
+  state.timer = setInterval(() => document.visibilityState === 'visible' && !$('sponsorDialog').open && !$('editDialog').open && !$('uploadDialog').open && !$('imgDialog').open && refresh(), POLL_MS);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -571,6 +617,19 @@ document.addEventListener('DOMContentLoaded', () => {
   $('editForm').addEventListener('submit', submitEdit);
   $('newChildBtn').addEventListener('click', () => openEdit(null));
   $('uploadBtn').addEventListener('click', () => $('uploadDialog').showModal());
+  $('imgFile').addEventListener('change', onImagePicked);
+  $('imgCamera').addEventListener('change', onImagePicked);
+  $('imgClose').addEventListener('click', () => $('imgDialog').close());
+  $('clearDemoBtn').addEventListener('click', async () => {
+    if (!confirm('Remover as crianças de EXEMPLO (fictícias)? As crianças reais não serão alteradas.')) return;
+    try {
+      const r = await api('/api/admin/demo/clear', { method: 'POST', body: {} });
+      toast(`${r.removed} crianças de exemplo removidas`);
+    } catch (err) {
+      toast(err.message);
+    }
+    await refresh();
+  });
   $('uploadClose').addEventListener('click', () => $('uploadDialog').close());
   document.querySelectorAll('.seg[data-panel]').forEach((b) => b.addEventListener('click', () => {
     document.querySelectorAll('.seg[data-panel]').forEach((x) => x.classList.toggle('active', x === b));
