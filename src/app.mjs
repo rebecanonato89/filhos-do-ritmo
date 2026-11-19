@@ -1,4 +1,4 @@
-import { readFile, stat, writeFile, unlink } from 'node:fs/promises';
+import { readFile, stat, writeFile, unlink, readdir } from 'node:fs/promises';
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { childrenFromCsv } from './csv.mjs';
 import { createReadStream } from 'node:fs';
@@ -315,6 +315,17 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
       }
       console.log(`${id ? 'edit' : 'create'} child=${savedId} by=${admin.email}`);
       return json(res, 200, childView(db_.getChild(db, savedId), admin, true));
+    }
+
+    if (method === 'POST' && path === '/api/admin/demo/clear') {
+      const admin = requireAdmin(req);
+      // Apaga só as crianças de exemplo (imagens demo-*); as reais não são tocadas.
+      const removed = db_.deleteDemoChildren(db);
+      for (const f of (await readdir(config.photosDir)).filter((f) => f.startsWith('demo-'))) {
+        await unlink(join(config.photosDir, f)).catch(() => {});
+      }
+      console.log(`demo clear removed=${removed} by=${admin.email}`);
+      return json(res, 200, { removed });
     }
 
     if (method === 'POST' && path === '/api/admin/import') {
