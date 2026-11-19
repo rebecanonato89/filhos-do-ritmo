@@ -119,12 +119,12 @@ function card(c) {
     { class: `card letter-card ${c.status}${c.mine ? ' is-mine' : ''}`, vars: classColor(c.class_name) },
     h('div', { class: 'lc-head' },
       h('span', { class: 'lc-class', vars: classColor(c.class_name) }, c.class_name),
+      h('span', { class: 'lc-dear' }, 'Querido Papai Noel...'),
       state.me.is_admin ? h('button', { type: 'button', class: 'pencil', onclick: () => openEdit(c), 'data-tip': 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, '✏️') : null,
       c.letter_photo_url
-        ? h('button', { type: 'button', class: 'envelope', onclick: () => openImage(c, 'letter'), 'data-tip': 'Ver a cartinha original', 'aria-label': `Ver a cartinha de ${c.name}` }, h('span', { 'aria-hidden': 'true' }, '✉️'), ' Cartinha')
+        ? h('button', { type: 'button', class: 'envelope', onclick: () => openImage(c, 'letter'), 'data-tip': 'Ver a cartinha original', 'aria-label': `Ver a cartinha de ${c.name}` }, h('span', { 'aria-hidden': 'true' }, '✉️'), h('span', { class: 'env-label' }, ' Cartinha'))
         : null,
     ),
-    h('p', { class: 'lc-dear' }, 'Querido Papai Noel...'),
     // Foto grande no topo (largura do card); nome e idade logo abaixo.
     h('figure', { class: 'polaroid polaroid-big' }, photo, h('figcaption', {}, 'Minha foto')),
     h('div', { class: 'lc-id lc-id-below' },
