@@ -445,3 +445,20 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
 
 .small-notice { font-size: .9rem; text-align: left; }
 .btn-wide { display: block; width: 100%; margin: 6px 0; }
+
+/* Foto grande: ocupa a largura do card; textos menores ao redor; Apadrinhar segue em destaque */
+.polaroid-big { margin: 4px 0 8px; padding: 6px 6px 4px; }
+.polaroid-big .polaroid-img { aspect-ratio: 1; }
+.polaroid-big figcaption { font-size: .66rem; }
+.lc-id-below { gap: 4px; }
+.lc-id-below .lc-label { font-size: .74rem; }
+.lc-id-below .gender-tag { margin-left: 4px; }
+.lc-dear { font-size: .9rem; margin: 2px 0 4px; }
+.lc-head { min-height: 30px; }
+.envelope { font-size: .7rem; padding: 4px 9px; box-shadow: none; }
+.pencil { width: 30px; height: 30px; font-size: .9rem; }
+.lc-wishes .lc-field { font-size: .85rem; }
+.lc-footer .btn { font-size: 1rem; padding: 11px 14px; box-shadow: 0 3px 10px rgba(232, 113, 26, .35); }
+@media (max-width: 720px) {
+  .polaroid-big .polaroid-img { aspect-ratio: 4 / 3; } /* no celular a foto não ocupa a tela inteira */
+}
