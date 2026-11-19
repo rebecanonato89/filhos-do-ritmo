@@ -497,6 +497,49 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
   .lc-footer .btn { padding: 8px 12px; }
   .class-band { padding: 8px 16px; font-size: 1.05rem; margin-bottom: 10px; }
 }
+/* Notebooks com pouca altura útil (ex.: janela 1152x640): reduz também os
+   controles e o corpo da cartinha para a foto e o botão caberem juntos. */
+@media (min-width: 721px) and (max-height: 650px) {
+  .topbar { gap: 8px; padding: 5px 10px; }
+  .topbar-logo { width: 34px; height: 34px; }
+  .topbar-title strong { font-size: .9rem; }
+  .topbar-title span { font-size: .68rem; }
+  .topbar-notice { margin-inline: 8px; padding: 3px 10px; font-size: .72rem; }
+  .tab { padding: 4px 9px; font-size: .78rem; }
+  .topbar .social { width: 30px; height: 30px; }
+
+  main { padding-top: 8px; }
+  #sponsorToolbar { gap: 6px; margin: 8px 0 4px; }
+  #sponsorToolbar .chips { gap: 4px; }
+  #sponsorToolbar .chip { padding: 4px 10px; font-size: .78rem; }
+  #sponsorToolbar .filters { gap: 5px; }
+  #sponsorToolbar select { padding: 4px 8px; font-size: .78rem; }
+  #sponsorToolbar .switch { font-size: .78rem; }
+  .counter { margin: 2px 0 6px; font-size: .82rem; }
+  .class-group { margin: 10px 0 18px; padding-bottom: 8px; }
+  .class-band { padding: 5px 14px; margin-bottom: 6px; font-size: .92rem; }
+  .class-band .class-count { padding: 2px 8px; font-size: .72rem; }
+
+  .letter-card { padding: 7px 8px 6px; }
+  .lc-head { min-height: 24px; }
+  .lc-head .pencil, .lc-head .envelope { width: 26px; height: 26px; }
+  .polaroid-big { margin: 1px 0 3px; padding: 3px; }
+  .polaroid-big .polaroid-img { height: 82px; }
+  .lc-id-below { gap: 1px; font-size: .7rem; }
+  .lc-id-below .lc-label { font-size: .68rem; }
+  .lc-field { min-height: 1.35em; line-height: 1.2; padding: 0 7px; font-size: .76rem; }
+  .lc-name { font-size: .82rem; }
+  .gender-tag { padding: 0 5px; font-size: .62rem; }
+  .lc-q { margin: 3px 0 2px; font-size: .68rem; }
+  .lc-wishes { gap: 1px; }
+  .lc-wishes .lc-field { font-size: .74rem; }
+  .lc-sizes { margin-top: 3px; }
+  .lc-sizes-row.three { gap: 3px; }
+  .lc-sizes-row.three .lc-size { gap: 0; font-size: .61rem; }
+  .lc-box { line-height: 1.15; }
+  .lc-footer { margin-top: 3px; }
+  .lc-footer .btn, .lc-footer .badge { padding: 5px 9px; font-size: .8rem; line-height: 1.2; }
+}
 /* Ao rolar, o card para logo abaixo do topo fixo (não esconde a cabeça da criança). */
 .letter-card { scroll-margin-top: calc(var(--topbar-h, 60px) + 8px); }
 @media (max-width: 720px) {
@@ -518,4 +561,8 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
   .lc-head .envelope { width: 30px; height: 30px; padding: 0; border-radius: 50%; display: inline-grid; place-items: center; }
   .lc-head .envelope .env-label { display: none; }
   .lc-head .lc-dear { font-size: .8rem; }
+}
+@media (min-width: 721px) and (max-height: 650px) {
+  .lc-head .envelope { width: 26px; height: 26px; }
+  .lc-head .lc-dear { font-size: .72rem; }
 }
