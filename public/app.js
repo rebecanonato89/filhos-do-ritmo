@@ -238,7 +238,6 @@ async function submitSponsor(ev) {
 
 function renderAdmin() {
   const all = state.children;
-  $('clearDemoBtn').hidden = !all.some((c) => /\/photos\/demo-/.test(`${c.photo_url} ${c.letter_photo_url}`));
   $('kidsCount').textContent = all.length;
   const sponsored = all.filter((c) => c.status === 'sponsored');
   const delivered = sponsored.filter((c) => c.delivered);
@@ -584,8 +583,10 @@ async function boot() {
   $('bottomNav').hidden = false;
   document.body.classList.add('signed-in');
   clearInterval(state.timer);
+  $('bottomNav').hidden = !state.me.approved; // pendente: nada a navegar ainda
   if (!state.me.approved) {
     $('pendingEmail').textContent = state.me.email;
+    $('pendingWhats').href = `https://wa.me/5535920038185?text=${encodeURIComponent(`Olá! Acabei de entrar no portal do Natal Solidário Filhos do Ritmo e gostaria de ser liberado(a) para apadrinhar. Meu e-mail de acesso: ${state.me.email}`)}`;
     show('pendingView');
     // Abre sozinho assim que o gestor liberar, sem o padrinho precisar recarregar.
     state.timer = setInterval(async () => {
@@ -620,16 +621,6 @@ document.addEventListener('DOMContentLoaded', () => {
   $('imgFile').addEventListener('change', onImagePicked);
   $('imgCamera').addEventListener('change', onImagePicked);
   $('imgClose').addEventListener('click', () => $('imgDialog').close());
-  $('clearDemoBtn').addEventListener('click', async () => {
-    if (!confirm('Remover as crianças de EXEMPLO (fictícias)? As crianças reais não serão alteradas.')) return;
-    try {
-      const r = await api('/api/admin/demo/clear', { method: 'POST', body: {} });
-      toast(`${r.removed} crianças de exemplo removidas`);
-    } catch (err) {
-      toast(err.message);
-    }
-    await refresh();
-  });
   $('uploadClose').addEventListener('click', () => $('uploadDialog').close());
   document.querySelectorAll('.seg[data-panel]').forEach((b) => b.addEventListener('click', () => {
     document.querySelectorAll('.seg[data-panel]').forEach((x) => x.classList.toggle('active', x === b));

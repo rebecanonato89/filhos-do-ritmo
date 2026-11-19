@@ -442,3 +442,6 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
   .demo-clear { order: 3; flex-basis: 100%; margin-left: 0; }
   .demo-clear + .icon-btn { margin-left: auto; }
 }
+
+.small-notice { font-size: .9rem; text-align: left; }
+.btn-wide { display: block; width: 100%; margin: 6px 0; }

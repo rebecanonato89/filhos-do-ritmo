@@ -52,7 +52,7 @@
       <h1>Natal Solidário</h1>
       <p>Escolha uma cartinha e presenteie uma criança do projeto neste Natal.</p>
       <a class="btn btn-google" href="/auth/google">Entrar com Google</a>
-      <p class="muted small">Para proteger as crianças, as fotos e cartinhas só aparecem para padrinhos identificados e liberados pela organização.</p>
+      <p class="notice small-notice">🔒 <strong>Depois de entrar, seu acesso fica pendente de aprovação.</strong> Para proteger as crianças, as fotos e cartinhas só aparecem para padrinhos liberados pela organização. A liberação costuma ser rápida.</p>
       <p class="error" id="loginError" hidden>Não foi possível entrar. Tente novamente.</p>
     </section>
 
@@ -61,7 +61,9 @@
       <h1>Quase lá!</h1>
       <p>Seu acesso (<strong id="pendingEmail"></strong>) foi registrado.</p>
       <p class="notice">Isso é normal 🙂 Para proteger as crianças, cada padrinho é liberado manualmente pela organização. <strong>Esta página abre sozinha</strong> assim que seu acesso for liberado; pode deixá-la aberta.</p>
-      <p class="muted small">Demorando? Avise a responsável pelas cartinhas no grupo do WhatsApp.</p>
+      <p>Você pode <strong>aguardar a liberação</strong> ou <strong>falar com a organização</strong> pelo WhatsApp:</p>
+      <a class="btn btn-whats btn-wide" id="pendingWhats" href="https://wa.me/5535920038185" target="_blank" rel="noopener">📲 Falar com a organização no WhatsApp</a>
+      <p class="muted small">(35) 92003-8185</p>
       <button type="button" class="btn btn-ghost" id="recheckBtn">Verificar agora</button>
     </section>
 
@@ -104,7 +106,6 @@
           <button type="button" class="seg active" data-panel="kids" role="tab" data-tip="Cartinhas, padrinhos e entregas">👧 Crianças <span class="seg-count" id="kidsCount"></span></button>
           <button type="button" class="seg" data-panel="users" role="tab" data-tip="Liberar ou bloquear padrinhos">🔑 Acessos <span class="badge-count" data-badge="pending" hidden></span></button>
         </div>
-        <button type="button" class="btn btn-small btn-ghost demo-clear" id="clearDemoBtn" hidden data-tip="Apaga só as crianças de exemplo">🧹 Remover exemplos</button>
         <button type="button" class="icon-btn" id="uploadBtn" data-tip="Carregar planilha e fotos" aria-label="Carregar planilha e fotos">📥</button>
       </div>
       <div id="panelKids">

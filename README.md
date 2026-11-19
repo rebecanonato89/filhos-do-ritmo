@@ -72,12 +72,8 @@ O navegador de quem envia aplica a **marca d'água** (logo no centro da foto; gr
 
 Alternativa por linha de comando: `scripts/import.mjs` (veja o cabeçalho do arquivo).
 
-## Dados de exemplo
-Use para testar antes das cartinhas reais. No GitHub, vá em **Actions → Dados de exemplo → Run workflow** e escolha:
-- `seed`: cria 10 crianças fictícias (foto ilustrada + cartinha no layout real, ambas com marca d'água e faixa "EXEMPLO · NÃO É CRIANÇA REAL", Turma Exemplo A/B).
-- `clear`: apaga **só** as de exemplo, inclusive apadrinhamentos de teste. As crianças reais não são tocadas.
-
-**Rode `clear` antes de divulgar o link aos padrinhos.**
+## Dados de exemplo (só para desenvolvimento local)
+`node scripts/demo.mjs seed|clear` cria/apaga 10 crianças fictícias num banco **local**. Em produção (`NODE_ENV=production`) o servidor apaga qualquer criança de exemplo ao subir: lá só ficam crianças reais.
 
 ## Backup manual
 ```bash
