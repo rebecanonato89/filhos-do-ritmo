@@ -524,7 +524,8 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
   .lc-head { min-height: 24px; }
   .lc-head .pencil, .lc-head .envelope { width: 26px; height: 26px; }
   .polaroid-big { margin: 1px 0 3px; padding: 3px; }
-  .polaroid-big .polaroid-img { height: 82px; }
+  .polaroid-big .polaroid-img { height: 120px; }
+  .polaroid-big .polaroid-img img { object-position: center 18%; }
   .lc-id-below { gap: 1px; font-size: .7rem; }
   .lc-id-below .lc-label { font-size: .68rem; }
   .lc-field { min-height: 1.35em; line-height: 1.2; padding: 0 7px; font-size: .76rem; }
