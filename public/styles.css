@@ -437,3 +437,8 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
 @media (pointer: coarse) { .camera-only { display: inline-block !important; } }
 .demo-clear { margin-left: auto; }
 .demo-clear + .icon-btn { margin-left: 0; }
+.admin-head { flex-wrap: wrap; }
+@media (max-width: 720px) {
+  .demo-clear { order: 3; flex-basis: 100%; margin-left: 0; }
+  .demo-clear + .icon-btn { margin-left: auto; }
+}
