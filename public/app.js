@@ -395,8 +395,9 @@ async function watermark(file, kind) {
     ctx.globalAlpha = 0.16;
     for (let y = size * 0.2; y < hgt; y += size * 1.3) for (let x = size * 0.1; x < w; x += size * 1.3) ctx.drawImage(logo, x, y, size, size);
   } else {
-    const size = Math.min(w, hgt) * 0.5;
-    ctx.globalAlpha = 0.45;
+    // Mantém a identificação visível sem cobrir o rosto da criança.
+    const size = Math.min(w, hgt) * 0.34;
+    ctx.globalAlpha = 0.28;
     ctx.drawImage(logo, (w - size) / 2, (hgt - size) / 2, size, size);
   }
   return new Promise((resolve) => cv.toBlob(resolve, 'image/jpeg', 0.85));
