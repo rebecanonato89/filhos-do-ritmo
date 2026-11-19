@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import { mkdirSync, readdirSync, rmSync } from 'node:fs';
+import { deleteDemoChildren } from './db.mjs';
 import { join } from 'node:path';
 import { openDb } from './db.mjs';
 import { createApp } from './app.mjs';
@@ -30,6 +31,13 @@ if (!config.googleClientId) console.warn('GOOGLE_CLIENT_ID vazio: login desativa
 mkdirSync(config.photosDir, { recursive: true });
 const db = openDb(join(dataDir, 'app.db'));
 const port = Number(env.PORT || 3000);
+
+// Produção só tem crianças reais: remove qualquer criança de exemplo (imagens demo-*) ao subir.
+if (env.NODE_ENV === 'production') {
+  const removed = deleteDemoChildren(db);
+  for (const f of readdirSync(config.photosDir).filter((f) => f.startsWith('demo-'))) rmSync(join(config.photosDir, f));
+  if (removed) console.log(`exemplos removidos: ${removed}`);
+}
 
 // Cópia do banco a cada 6h dentro do volume (mantém as 12 últimas = 3 dias).
 // Não substitui o CSV exportado pelo gestor, que é a cópia fora da VPS.
