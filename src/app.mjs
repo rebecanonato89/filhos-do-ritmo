@@ -380,6 +380,14 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
       return json(res, 200, { ok: true });
     }
 
+    if (method === 'DELETE' && (m = path.match(/^\/api\/admin\/users\/([^/]+)$/))) {
+      const admin = requireAdmin(req);
+      const email = decodeURIComponent(m[1]).toLowerCase();
+      if (!db_.deleteUser(db, email)) throw new HttpError(404, 'Usuário não encontrado');
+      console.log(`delete user email=${email} by=${admin.email}`);
+      return json(res, 200, { ok: true });
+    }
+
     if (method === 'GET' && path === '/api/admin/export.csv') {
       requireAdmin(req);
       const header = ['Turma', 'Criança', 'Idade', 'Sexo', 'Pedido 1', 'Pedido 2', 'Pedido 3', 'Camisa', 'Calça', 'Tênis', 'Status', 'Padrinho', 'E-mail', 'WhatsApp', 'Apadrinhado em', 'Entregue'];

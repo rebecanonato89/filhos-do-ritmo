@@ -151,6 +151,10 @@ export function listUsers(db) {
   return db.prepare('SELECT email, google_name, approved, created_at, last_login FROM users ORDER BY approved, created_at DESC').all();
 }
 
+export function deleteUser(db, email) {
+  return db.prepare('DELETE FROM users WHERE email = ?').run(email).changes === 1;
+}
+
 export function setApproved(db, email, approved) {
   return db.prepare('UPDATE users SET approved = ? WHERE email = ?').run(approved ? 1 : 0, email).changes === 1;
 }
