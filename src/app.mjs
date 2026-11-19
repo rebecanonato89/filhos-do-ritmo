@@ -179,7 +179,7 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
     const url = new URL(req.url, config.baseUrl);
     const path = url.pathname;
     const method = req.method;
-    if (method === 'POST') checkOrigin(req);
+    if (method === 'POST' || method === 'DELETE') checkOrigin(req);
 
     if (method === 'GET' && STATIC[path]) {
       const [file, type] = STATIC[path];
@@ -354,6 +354,16 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
       const old = db_.setChildImage(db, id, kind, file);
       if (old) await unlink(join(config.photosDir, basename(old))).catch(() => {});
       return json(res, 200, { url: `/photos/${file}` });
+    }
+
+    if (method === 'DELETE' && (m = path.match(/^\/api\/admin\/children\/(\d+)\/image$/))) {
+      requireAdmin(req);
+      const kind = url.searchParams.get('kind') === 'letter' ? 'letter_photo' : 'photo';
+      const id = Number(m[1]);
+      if (!db_.getChild(db, id)) throw new HttpError(404, 'Criança não encontrada');
+      const old = db_.setChildImage(db, id, kind, null);
+      if (old) await unlink(join(config.photosDir, basename(old))).catch(() => {});
+      return json(res, 200, { ok: true });
     }
 
     if (method === 'GET' && path === '/api/admin/users') {
