@@ -112,7 +112,7 @@ function card(c) {
     footer = h('button', { type: 'button', class: 'btn', onclick: () => openSponsor(c) }, '🎁 Apadrinhar');
   }
 
-  const sizes = [['👕', 'Camiseta', c.sizes.shirt], ['👖', 'Calça', c.sizes.pants], ['👟', 'Tênis', c.sizes.shoe]];
+  const sizes = [['Camiseta', c.sizes.shirt], ['Calça', c.sizes.pants], ['Tênis', c.sizes.shoe]];
 
   return h(
     'article',
@@ -135,11 +135,11 @@ function card(c) {
     ),
     h('p', { class: 'lc-q' }, 'Neste Natal, eu gostaria de ganhar:'),
     h('ol', { class: 'lc-wishes' }, c.gifts.map((g) => h('li', {}, field(g)))),
-    sizes.some(([, , v]) => v)
+    sizes.some(([, v]) => v)
       ? h('div', { class: 'lc-sizes' },
           h('p', { class: 'lc-sizes-title' }, 'Meus tamanhos'),
-          h('div', { class: 'lc-sizes-row three' }, sizes.map(([icon, label, v]) =>
-            h('span', { class: 'lc-size' }, h('span', { 'aria-hidden': 'true' }, icon), ` ${label} `, field(v, 'lc-box'))))) 
+          h('div', { class: 'lc-sizes-row three' }, sizes.map(([label, v]) =>
+            h('span', { class: 'lc-size' }, `${label} `, field(v, 'lc-box')))))
       : null,
     h('div', { class: 'lc-footer' }, footer),
   );
