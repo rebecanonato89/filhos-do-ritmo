@@ -3,10 +3,11 @@ import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { childrenFromCsv } from './csv.mjs';
 import { createReadStream } from 'node:fs';
 import { join, basename, extname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as db_ from './db.mjs';
 import * as auth from './auth.mjs';
 
-const PUBLIC_DIR = new URL('../public/', import.meta.url).pathname;
+const PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
 
 const STATIC = {
   '/': ['index.html', 'text/html; charset=utf-8'],

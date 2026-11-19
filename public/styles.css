@@ -524,8 +524,8 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
   .lc-head { min-height: 24px; }
   .lc-head .pencil, .lc-head .envelope { width: 26px; height: 26px; }
   .polaroid-big { margin: 1px 0 3px; padding: 3px; }
-  .polaroid-big .polaroid-img { height: 120px; }
-  .polaroid-big .polaroid-img img { object-position: center 18%; }
+  .polaroid-big .polaroid-img { height: 150px; }
+  .polaroid-big .polaroid-img img { object-fit: contain; object-position: center center; background: #fff; }
   .lc-id-below { gap: 1px; font-size: .7rem; }
   .lc-id-below .lc-label { font-size: .68rem; }
   .lc-field { min-height: 1.35em; line-height: 1.2; padding: 0 7px; font-size: .76rem; }
@@ -534,12 +534,12 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
   .lc-q { margin: 3px 0 2px; font-size: .68rem; }
   .lc-wishes { gap: 1px; }
   .lc-wishes .lc-field { font-size: .74rem; }
-  .lc-sizes { margin-top: 3px; }
-  .lc-sizes-row.three { gap: 3px; }
-  .lc-sizes-row.three .lc-size { gap: 0; font-size: .61rem; }
+  .lc-sizes { margin-top: 4px; }
+  .lc-sizes-row.three { gap: 5px; }
+  .lc-sizes-row.three .lc-size { gap: 2px; font-size: .7rem; }
   .lc-box { line-height: 1.15; }
-  .lc-footer { margin-top: 3px; }
-  .lc-footer .btn, .lc-footer .badge { padding: 5px 9px; font-size: .8rem; line-height: 1.2; }
+  .lc-footer { margin-top: 5px; }
+  .lc-footer .btn, .lc-footer .badge { padding: 7px 12px; font-size: .84rem; line-height: 1.25; }
 }
 /* Ao rolar, o card para logo abaixo do topo fixo (não esconde a cabeça da criança). */
 .letter-card { scroll-margin-top: calc(var(--topbar-h, 60px) + 8px); }
