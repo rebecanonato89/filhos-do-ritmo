@@ -145,6 +145,35 @@ function card(c) {
   );
 }
 
+// Nomes longos não quebram linha: primeiro abrevia os nomes do meio ("Helena Louise Ferreira
+// Barusco" -> "Helena L. Ferreira Barusco" -> ...), mantendo o primeiro e o último nome por
+// inteiro; se ainda não couber, reduz a fonte até caber.
+function fitName(el) {
+  const full = el.dataset.full ?? (el.dataset.full = el.textContent);
+  const words = full.split(' ');
+  el.style.fontSize = '';
+  el.textContent = full;
+  if (el.scrollWidth <= el.clientWidth + 1) return;
+  for (let i = 1; i < words.length - 1 && el.scrollWidth > el.clientWidth + 1; i++) {
+    if (words[i].length <= 2) continue;
+    words[i] = words[i][0] + '.';
+    el.textContent = words.join(' ');
+  }
+  if (el.scrollWidth <= el.clientWidth + 1) return;
+  // Reduz a partir do tamanho que já está valendo neste breakpoint (não um valor fixo).
+  const baseSize = parseFloat(getComputedStyle(el).fontSize);
+  const minSize = baseSize * 0.72;
+  let size = baseSize;
+  while (el.scrollWidth > el.clientWidth + 1 && size > minSize) {
+    size -= 1;
+    el.style.fontSize = `${size}px`;
+  }
+}
+
+function fitAllNames() {
+  document.querySelectorAll('.lc-name').forEach(fitName);
+}
+
 function renderSponsor() {
   const mine = state.children.filter((c) => c.mine).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   const onlyMine = state.view === 'mine';
@@ -154,7 +183,7 @@ function renderSponsor() {
   $('mineEmpty').hidden = !(onlyMine && !mine.length);
   for (const id of ['sponsorToolbar', 'counter', 'classes']) $(id).hidden = onlyMine;
   document.querySelectorAll('[data-badge=mine]').forEach((b) => { b.textContent = mine.length; b.hidden = !mine.length; });
-  if (onlyMine) return;
+  if (onlyMine) { fitAllNames(); return; }
 
   const classes = [...new Set(state.children.map((c) => c.class_name))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   $('classChips').replaceChildren(
@@ -195,6 +224,7 @@ function renderSponsor() {
         h('div', { class: 'grid' }, list.map(card)));
     }),
   );
+  fitAllNames();
 }
 
 function openImage(c, which) {
@@ -616,6 +646,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }));
   // Altura real do topo (varia com o aviso) para os filtros grudarem logo abaixo dele.
   new ResizeObserver(([e]) => document.documentElement.style.setProperty('--topbar-h', `${e.target.offsetHeight}px`)).observe($('topbar'));
+  // Reencaixa os nomes (abrevia/reduz fonte) quando a largura do card muda com a tela.
+  let fitNamesTimer;
+  window.addEventListener('resize', () => { clearTimeout(fitNamesTimer); fitNamesTimer = setTimeout(fitAllNames, 150); });
   $('sponsorForm').addEventListener('submit', submitSponsor);
   $('dlgCancel').addEventListener('click', () => $('sponsorDialog').close());
   $('photoClose').addEventListener('click', () => $('photoDialog').close());

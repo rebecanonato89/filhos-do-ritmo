@@ -156,7 +156,7 @@ main { flex: 1 0 auto; width: 100%; max-width: 1480px; margin: 0 auto; padding: 
 .lc-id { display: flex; flex-direction: column; gap: 6px; font-weight: 700; font-size: .85rem; }
 .lc-label { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .lc-field { display: inline-block; border: 2px solid var(--xmas-red); border-radius: 999px; padding: 2px 12px; font-weight: 400; font-size: 1rem; line-height: 1.35; min-height: 1.9em; }
-.lc-name { display: block; font-size: 1.1rem; overflow-wrap: anywhere; }
+.lc-name { display: block; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lc-age { min-width: 3em; text-align: center; }
 .lc-q { color: var(--xmas-red); font-weight: 800; font-size: .95rem; margin: 14px 0 6px; }
 .lc-wishes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
