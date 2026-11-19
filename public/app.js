@@ -119,12 +119,12 @@ function card(c) {
     { class: `card letter-card ${c.status}${c.mine ? ' is-mine' : ''}`, vars: classColor(c.class_name) },
     h('div', { class: 'lc-head' },
       h('span', { class: 'lc-class', vars: classColor(c.class_name) }, c.class_name),
+      h('span', { class: 'lc-dear' }, 'Querido Papai Noel...'),
       state.me.is_admin ? h('button', { type: 'button', class: 'pencil', onclick: () => openEdit(c), 'data-tip': 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, '✏️') : null,
       c.letter_photo_url
-        ? h('button', { type: 'button', class: 'envelope', onclick: () => openImage(c, 'letter'), 'data-tip': 'Ver a cartinha original', 'aria-label': `Ver a cartinha de ${c.name}` }, h('span', { 'aria-hidden': 'true' }, '✉️'), ' Cartinha')
+        ? h('button', { type: 'button', class: 'envelope', onclick: () => openImage(c, 'letter'), 'data-tip': 'Ver a cartinha original', 'aria-label': `Ver a cartinha de ${c.name}` }, h('span', { 'aria-hidden': 'true' }, '✉️'), h('span', { class: 'env-label' }, ' Cartinha'))
         : null,
     ),
-    h('p', { class: 'lc-dear' }, 'Querido Papai Noel...'),
     // Foto grande no topo (largura do card); nome e idade logo abaixo.
     h('figure', { class: 'polaroid polaroid-big' }, photo, h('figcaption', {}, 'Minha foto')),
     h('div', { class: 'lc-id lc-id-below' },
@@ -395,8 +395,9 @@ async function watermark(file, kind) {
     ctx.globalAlpha = 0.16;
     for (let y = size * 0.2; y < hgt; y += size * 1.3) for (let x = size * 0.1; x < w; x += size * 1.3) ctx.drawImage(logo, x, y, size, size);
   } else {
-    const size = Math.min(w, hgt) * 0.5;
-    ctx.globalAlpha = 0.45;
+    // Mantém a identificação visível sem cobrir o rosto da criança.
+    const size = Math.min(w, hgt) * 0.34;
+    ctx.globalAlpha = 0.28;
     ctx.drawImage(logo, (w - size) / 2, (hgt - size) / 2, size, size);
   }
   return new Promise((resolve) => cv.toBlob(resolve, 'image/jpeg', 0.85));
