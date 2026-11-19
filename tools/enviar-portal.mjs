@@ -80,8 +80,8 @@ async function watermark(file, kind) {
       }
     }
   } else {
-    const size = Math.round(Math.min(w, h) * 0.5);
-    layers.push({ input: await logo(size, 0.45), left: Math.round((w - size) / 2), top: Math.round((h - size) / 2) });
+    const size = Math.round(Math.min(w, h) * 0.34); // igual ao navegador (public/app.js)
+    layers.push({ input: await logo(size, 0.28), left: Math.round((w - size) / 2), top: Math.round((h - size) / 2) });
   }
   return sharp(data).composite(layers).jpeg({ quality: 85 }).toBuffer(); // sem withMetadata → EXIF/GPS descartados
 }
