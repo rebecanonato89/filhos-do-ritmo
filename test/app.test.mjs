@@ -301,3 +301,12 @@ test('lista de acessos marca gestores, para o painel não contá-los como padrin
   assert.equal(users.find((u) => u.email === 'alice@gmail.com').is_admin, false);
   assert.equal((await get('/api/admin/users', alice)).status, 403, 'padrinho não vê a lista');
 });
+
+test('local e contatos de entrega só para padrinhos liberados', async () => {
+  assert.equal((await get('/api/delivery')).status, 401, 'sem login');
+  const html = await (await fetch(`${base}/`)).text();
+  assert.doesNotMatch(html, /984343576|997160900|José Moreira/, 'telefones e endereço fora do HTML público');
+  const res = await get('/api/delivery', alice);
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).contacts.length, 3);
+});

@@ -628,6 +628,26 @@ async function bulkUpload(files, kind) {
   await refresh();
 }
 
+// ---------- Entrega (só para liberados) ----------
+
+const fmtPhone = (d) => `(${d.slice(0, 2)}) ${d.slice(2, -4)}-${d.slice(-4)}`;
+const WHATS_HELLO = 'Olá! Sou padrinho/madrinha do Natal Solidário Filhos do Ritmo e quero combinar a entrega do presente.';
+
+async function loadDelivery() {
+  try {
+    const d = await api('/api/delivery');
+    $('deliveryInfo').replaceChildren(
+      h('p', {}, 'Até ', h('strong', {}, d.deadline), ', no ', h('strong', {}, d.place), ':', h('br'), d.address, '.'),
+      h('p', {}, h('strong', {}, 'Antes de levar, combine a entrega'), ' com um dos responsáveis:'),
+      h('div', { class: 'note-contacts' }, ...d.contacts.map((c) =>
+        h('a', { class: 'btn btn-small btn-whats', href: `https://wa.me/55${c.phone}?text=${encodeURIComponent(WHATS_HELLO)}`, target: '_blank', rel: 'noopener' }, `📲 ${c.name.split(' ')[0]}`, h('small', {}, fmtPhone(c.phone))))),
+    );
+    $('sponsoredDelivery').replaceChildren('📦 Entregue o presente ', h('strong', {}, `até ${d.deadline}`), ' no ', h('strong', {}, d.place), ` (${d.address}), combinando antes com a organização.`);
+  } catch {
+    $('deliveryInfo').replaceChildren(h('p', {}, 'Fale com a organização para combinar a entrega.'));
+  }
+}
+
 // ---------- Orientação ----------
 
 // Uma vez por padrinho neste aparelho: quem entra rápido nem chega a abrir a aba Minhas.
@@ -705,6 +725,7 @@ async function boot() {
   document.querySelectorAll('[data-admin]').forEach((el) => (el.hidden = !state.me.is_admin));
   $('topNotice').hidden = false;
   await refresh();
+  loadDelivery();
   showWelcomeOnce();
   state.timer = setInterval(() => document.visibilityState === 'visible' && !$('sponsorDialog').open && !$('editDialog').open && !$('uploadDialog').open && !$('imgDialog').open && refresh(), POLL_MS);
 }

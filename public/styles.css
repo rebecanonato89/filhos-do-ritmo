@@ -633,3 +633,6 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
 [data-view=mine].pulse { animation: tab-pulse 1.2s ease-in-out 6; }
 @keyframes tab-pulse { 50% { box-shadow: 0 0 0 4px rgba(232, 113, 26, .55); } }
 @media (prefers-reduced-motion: reduce) { .admin-alert, [data-view=mine].pulse { animation: none; } }
+.note-contacts { display: flex; flex-wrap: wrap; gap: 6px; }
+.note-contacts .btn { flex-direction: column; line-height: 1.15; padding: 6px 10px; min-height: 0; }
+.note-contacts .btn small { font-weight: 500; font-size: .72rem; opacity: .9; }
