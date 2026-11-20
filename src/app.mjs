@@ -155,9 +155,16 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
   }
   const canSee = (user) => isAdmin(user) || !config.requireApproval || db_.isApproved(db, user.email);
 
+  // "Online agora": última chamada de cada e-mail, só em memória (zera no deploy, sem gravar
+  // nada novo no banco). Navegadores abertos consultam a cada 15 s enquanto a aba está visível.
+  const ONLINE_MS = 60_000;
+  const lastSeen = new Map();
+  const touch = (user) => { if (user?.email && !user.api) lastSeen.set(user.email, Date.now()); };
+
   function requireUser(req) {
     const user = readApiToken(req) || auth.readSession(req, config);
     if (!user) throw new HttpError(401, 'Faça login');
+    touch(user);
     return user;
   }
 
@@ -237,6 +244,7 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
     if (method === 'GET' && path === '/api/me') {
       const user = auth.readSession(req, config);
       if (!user) return json(res, 200, { authenticated: false });
+      touch(user);
       return json(res, 200, {
         authenticated: true,
         email: user.email,
@@ -376,7 +384,8 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
 
     if (method === 'GET' && path === '/api/admin/users') {
       requireAdmin(req);
-      return json(res, 200, db_.listUsers(db).map((u) => ({ ...u, approved: u.approved === 1, is_admin: isAdmin(u) })));
+      const now = Date.now();
+      return json(res, 200, db_.listUsers(db).map((u) => ({ ...u, approved: u.approved === 1, is_admin: isAdmin(u), online: now - (lastSeen.get(u.email) || 0) < ONLINE_MS })));
     }
 
     if (method === 'POST' && path === '/api/admin/users/approval') {
