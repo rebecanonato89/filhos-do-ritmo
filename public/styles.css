@@ -688,3 +688,42 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
 #userStats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 @media (max-width: 980px) { #userStats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 720px) { #userStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ===== Minhas: layout conforme quantas crianças o padrinho tem =====
+   0 ou 3+: quadro em cima, largura toda, avisos lado a lado.
+   1 ou 2: cartinhas à esquerda (largura exata) e quadro ocupando o resto, sem rolagem interna. */
+.mine-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+.mine-layout[data-count="0"] .notice-board, .mine-layout[data-count="many"] .notice-board { order: -1; }
+.notice-board { position: static; max-height: none; overflow: visible; }
+.notice-board .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px 22px; align-items: start; }
+.notice-board .note { margin: 6px 4px 0; }
+@media (min-width: 981px) {
+  .mine-layout[data-count="1"] { grid-template-columns: 320px minmax(0, 1fr); }
+  .mine-layout[data-count="2"] { grid-template-columns: 664px minmax(0, 1fr); }
+  .mine-layout[data-count="1"] #mineGrid { grid-template-columns: minmax(0, 1fr); }
+  .mine-layout[data-count="2"] #mineGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mine-layout[data-count="1"] .notice-board, .mine-layout[data-count="2"] .notice-board { margin-top: 44px; } /* alinha com o topo das cartinhas */
+}
+@media (max-width: 980px) { .mine-layout .notice-board { order: 0; } .mine-layout[data-count="0"] .notice-board { order: -1; } }
+
+/* Contatos: uma linha por pessoa, nunca quebra dentro do botão. */
+.note-contacts { display: grid; gap: 6px; }
+.contact-btn {
+  display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 10px; text-decoration: none;
+  background: #25d366; color: #0b3d1e; font-size: .9rem; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,.12);
+}
+.contact-btn:hover { background: #1fb956; }
+.contact-btn strong { min-width: 4.6em; }
+.contact-go { margin-left: auto; font-size: .76rem; font-weight: 700; opacity: .85; }
+
+/* Rodapé da cartinha em Minhas: textos curtos, sem quebra de linha. */
+.lc-footer .badge.mine { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.share-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.share-row .btn { height: 42px; padding: 0 10px; white-space: nowrap; display: flex; align-items: center; justify-content: center; font-size: .9rem; }
+.contact-btn { min-width: 0; }
+.contact-btn strong { min-width: 0; flex: none; }
+.contact-btn span:not(.contact-go) { overflow: hidden; text-overflow: ellipsis; }
+.contact-go { font-size: 1rem; }
+.notice-board .note { transform: none; } /* notas retas: leitura mais fácil com botões dentro */
+.notice-board .note-yellow { transform: rotate(-.6deg); }
+.lc-head .lc-class { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; max-width: 55%; }

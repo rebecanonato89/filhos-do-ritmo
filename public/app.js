@@ -130,7 +130,7 @@ function card(c) {
       h('div', { class: 'badge mine' }, c.delivered ? '✅ Sua criança · presente entregue' : '💛 Sua criança · entregar até 01/12'),
       h('div', { class: 'share-row' },
         h('a', { class: 'btn btn-small btn-whats', href: `https://wa.me/?text=${encodeURIComponent(childSummary(c))}`, target: '_blank', rel: 'noopener', 'data-tip': 'Enviar os dados para você ou sua família' }, '📲 WhatsApp'),
-        h('button', { type: 'button', class: 'btn btn-small btn-ghost', onclick: () => copyText(childSummary(c)), 'data-tip': 'Copiar os dados da cartinha' }, '📋 Copiar dados'),
+        h('button', { type: 'button', class: 'btn btn-small btn-ghost', onclick: () => copyText(childSummary(c)), 'data-tip': 'Copiar os dados da cartinha' }, '📋 Copiar'),
       ));
   } else if (c.status === 'sponsored') {
     footer = h('div', { class: 'badge taken' }, 'Já apadrinhada');
@@ -144,7 +144,7 @@ function card(c) {
     'article',
     { class: `card letter-card ${c.status}${c.mine ? ' is-mine' : ''}`, vars: classColor(c.class_name) },
     h('div', { class: 'lc-head' },
-      h('span', { class: 'lc-class', vars: classColor(c.class_name) }, c.class_name),
+      h('span', { class: 'lc-class', vars: classColor(c.class_name), title: c.class_name }, c.class_name),
       h('span', { class: 'lc-dear' }, 'Querido Papai Noel...'),
       state.me.is_admin ? h('button', { type: 'button', class: 'pencil', onclick: () => openEdit(c), 'data-tip': 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, pencilIcon()) : null,
       c.letter_photo_url
@@ -204,6 +204,8 @@ function renderSponsor() {
   const onlyMine = state.view === 'mine';
   // 'Minhas' só aparece na aba Minhas: a tela Cartinhas mostra a lista inteira para apadrinhar mais.
   $('mineLayout').hidden = !onlyMine;
+  // Layout de Minhas depende de quantas crianças: 1–2 ao lado do quadro; 0 ou 3+ com o quadro em cima.
+  $('mineLayout').dataset.count = mine.length > 2 ? 'many' : String(mine.length);
   $('mine').hidden = !(onlyMine && mine.length);
   $('mineGrid').replaceChildren(...mine.map(card));
   $('mineEmpty').hidden = !(onlyMine && !mine.length);
@@ -699,7 +701,7 @@ async function loadDelivery() {
       h('p', {}, 'Até ', h('strong', {}, d.deadline), ', no ', h('strong', {}, d.place), ':', h('br'), d.address, '.'),
       h('p', {}, h('strong', {}, 'Antes de levar, combine a entrega'), ' com um dos responsáveis:'),
       h('div', { class: 'note-contacts' }, ...d.contacts.map((c) =>
-        h('a', { class: 'btn btn-small btn-whats', href: `https://wa.me/55${c.phone}?text=${encodeURIComponent(WHATS_HELLO)}`, target: '_blank', rel: 'noopener' }, `📲 ${c.name.split(' ')[0]}`, h('small', {}, fmtPhone(c.phone))))),
+        h('a', { class: 'contact-btn', href: `https://wa.me/55${c.phone}?text=${encodeURIComponent(WHATS_HELLO)}`, target: '_blank', rel: 'noopener', 'aria-label': `WhatsApp de ${c.name}` }, h('strong', {}, c.name.split(' ')[0]), h('span', {}, fmtPhone(c.phone)), h('span', { class: 'contact-go', 'aria-hidden': 'true' }, '→')))),
     );
     $('sponsoredDelivery').replaceChildren('📦 Entregue o presente ', h('strong', {}, `até ${d.deadline}`), ' no ', h('strong', {}, d.place), ` (${d.address}), combinando antes com a organização.`);
   } catch {
