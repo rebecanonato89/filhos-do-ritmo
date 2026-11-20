@@ -372,6 +372,7 @@ function renderUsers() {
   const withKids = sponsors.filter((u) => kidsOf(u).length);
   const idle = approved.filter((u) => !kidsOf(u).length);
   document.querySelectorAll('[data-badge=pending]').forEach((b) => { b.textContent = pending.length; b.hidden = !pending.length; });
+  notifyNewPending(pending);
   // A gestora não percebeu o contador pequeno: aviso grande enquanto houver gente esperando.
   const onUsers = state.view === 'admin' && !$('panelUsers').hidden;
   $('adminAlert').hidden = !pending.length || onUsers;
@@ -379,7 +380,7 @@ function renderUsers() {
 
   const stat = (icon, n, label, kind, filter) => h('button', { type: 'button', class: `stat stat-${kind} stat-btn${$('userFilter').value === filter ? ' active' : ''}`, 'data-tip': 'Filtrar a lista', onclick: () => { $('userFilter').value = filter; renderUsers(); } }, h('span', { class: 'stat-ico', 'aria-hidden': 'true' }, icon), h('div', {}, h('strong', {}, n), h('span', {}, label)));
   $('userStats').replaceChildren(
-    stat('👥', sponsors.length, 'padrinhos logados', 'total', 'all'),
+    stat('👥', sponsors.length, 'já entraram no portal', 'total', 'all'),
     stat('⏳', pending.length, 'aguardando liberação', 'pending', 'pending'),
     stat('💛', withKids.length, 'já apadrinharam', 'taken', 'sponsored'),
     stat('👀', idle.length, 'liberados sem apadrinhar', 'free', 'idle'),
@@ -628,6 +629,39 @@ async function bulkUpload(files, kind) {
   await refresh();
 }
 
+// ---------- Aviso ao gestor no computador ----------
+
+const BASE_TITLE = document.title;
+const canNotify = () => 'Notification' in window && matchMedia('(pointer: fine)').matches; // celular exige service worker
+
+// Notificação do sistema quando chega alguém novo esperando liberação (a aba pode estar em segundo plano).
+function notifyNewPending(pending) {
+  document.title = pending.length ? `(${pending.length}) ${BASE_TITLE}` : BASE_TITLE;
+  const emails = new Set(pending.map((u) => u.email));
+  const fresh = state.knownPending ? pending.filter((u) => !state.knownPending.has(u.email)) : [];
+  state.knownPending = emails;
+  updateNotifyButton();
+  if (!fresh.length || !canNotify() || Notification.permission !== 'granted') return;
+  try {
+    const n = new Notification('Filhos do Ritmo · acesso para liberar', {
+      body: fresh.length === 1 ? `${fresh[0].google_name} está aguardando liberação` : `${fresh.length} pessoas estão aguardando liberação`,
+      icon: '/icon-192.png',
+      tag: 'fdr-pending',
+    });
+    n.onclick = () => { window.focus(); goToPendingUsers(); n.close(); };
+  } catch { /* navegador sem suporte: fica o título da aba e a faixa amarela */ }
+}
+
+function updateNotifyButton() {
+  const btn = $('notifyBtn');
+  if (!canNotify() || Notification.permission === 'granted') { btn.hidden = true; return; }
+  btn.hidden = false;
+  btn.disabled = Notification.permission === 'denied';
+  btn.textContent = Notification.permission === 'denied'
+    ? '🔕 Avisos bloqueados neste navegador: libere em Configurações do site → Notificações'
+    : '🔔 Avisar neste computador quando alguém pedir acesso';
+}
+
 // ---------- Entrega (só para liberados) ----------
 
 const fmtPhone = (d) => `(${d.slice(0, 2)}) ${d.slice(2, -4)}-${d.slice(-4)}`;
@@ -727,7 +761,13 @@ async function boot() {
   await refresh();
   loadDelivery();
   showWelcomeOnce();
-  state.timer = setInterval(() => document.visibilityState === 'visible' && !$('sponsorDialog').open && !$('editDialog').open && !$('uploadDialog').open && !$('imgDialog').open && refresh(), POLL_MS);
+  state.timer = setInterval(() => {
+    if (document.visibilityState !== 'visible') {
+      if (state.me.is_admin) loadUsers().catch(() => {});
+      return;
+    }
+    if (!$('sponsorDialog').open && !$('editDialog').open && !$('uploadDialog').open && !$('imgDialog').open) refresh();
+  }, POLL_MS);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -749,6 +789,11 @@ document.addEventListener('DOMContentLoaded', () => {
   $('sponsoredMore').addEventListener('click', () => $('sponsoredDialog').close());
   $('sponsoredGo').addEventListener('click', () => { $('sponsoredDialog').close(); setView('mine'); });
   $('adminAlert').addEventListener('click', goToPendingUsers);
+  $('notifyBtn').addEventListener('click', async () => {
+    try { await Notification.requestPermission(); } catch { /* ignora */ }
+    updateNotifyButton();
+    if (Notification.permission === 'granted') toast('Pronto! Você será avisada quando alguém pedir acesso, com esta aba aberta.');
+  });
   $('dlgCancel').addEventListener('click', () => $('sponsorDialog').close());
   $('photoClose').addEventListener('click', () => $('photoDialog').close());
   $('editForm').addEventListener('submit', submitEdit);
