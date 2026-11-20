@@ -576,3 +576,38 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
 .legal h1 { font-size: 1.6rem; margin: 12px 0 4px; }
 .legal h2 { font-size: 1.1rem; margin: 24px 0 6px; }
 .legal a { color: #c45a0c; }
+
+/* ===== Minhas: crianças à esquerda, quadro de avisos fixo à direita ===== */
+.mine-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 22px; align-items: start; }
+.mine-main { min-width: 0; }
+.mine-main .empty-mine { margin-top: 6vh; }
+.notice-board {
+  position: sticky; top: calc(var(--topbar-h, 60px) + 12px);
+  background: #e9c9a0; border: 8px solid #a5713f; border-radius: 10px; padding: 14px 14px 18px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08), 0 6px 18px rgba(0,0,0,.12);
+  max-height: calc(100dvh - var(--topbar-h, 60px) - 24px); overflow-y: auto;
+  background-image: radial-gradient(rgba(120,72,30,.18) 1px, transparent 1.5px); background-size: 9px 9px;
+}
+.notice-board > h2 { margin: 0 0 12px; font-size: 1.05rem; color: #4a2c12; text-align: center; }
+.note { position: relative; padding: 22px 16px 14px; margin: 0 4px 16px; border-radius: 2px; color: #2b2118; line-height: 1.5; font-size: .92rem; box-shadow: 0 3px 8px rgba(0,0,0,.18); }
+.note:last-child { margin-bottom: 0; }
+.note-yellow { background: #fff6b8; transform: rotate(-1.2deg); }
+.note-pink { background: #ffe0ea; transform: rotate(1deg); }
+.note h3 { margin: 0 0 6px; font-size: 1rem; }
+.note p { margin: 0 0 6px; white-space: pre-line; }
+.note .pin { position: absolute; top: -7px; left: 50%; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8a8a, #d62828 60%, #8c1010); box-shadow: 0 2px 3px rgba(0,0,0,.35); }
+@media (max-width: 980px) {
+  .mine-layout { grid-template-columns: 1fr; }
+  .notice-board { position: static; max-height: none; }
+}
+
+/* ===== Acessos: números clicáveis e crianças de cada padrinho ===== */
+.stat-btn { font: inherit; text-align: left; cursor: pointer; color: inherit; }
+.stat-btn:hover { box-shadow: 0 3px 10px rgba(0,0,0,.08); }
+.stat-btn.active { outline: 2px solid var(--sc); outline-offset: 1px; }
+#panelUsers .stats { margin-bottom: 12px; }
+.kid-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.kid-chip { display: inline-flex; flex-direction: column; background: var(--tc, #f3f3f3); color: var(--tci, #333); border-radius: 8px; padding: 3px 8px; font-size: .82rem; font-weight: 600; line-height: 1.25; }
+.kid-chip small { font-weight: 400; opacity: .8; font-size: .72rem; }
+.status-pill.admin { background: #ede7ff; color: #5b3cc4; }
+@media (max-width: 720px) { #userStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

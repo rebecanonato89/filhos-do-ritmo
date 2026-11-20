@@ -294,3 +294,10 @@ test('política de privacidade é pública (exigida pelo Google para publicar o 
   assert.match(html, /Política de Privacidade/);
   assert.match(html, /styles\.css\?v=/);
 });
+
+test('lista de acessos marca gestores, para o painel não contá-los como padrinhos', async () => {
+  const users = await (await get('/api/admin/users', admin)).json();
+  assert.equal(users.find((u) => u.email === ADMIN).is_admin, true);
+  assert.equal(users.find((u) => u.email === 'alice@gmail.com').is_admin, false);
+  assert.equal((await get('/api/admin/users', alice)).status, 403, 'padrinho não vê a lista');
+});

@@ -369,7 +369,7 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
 
     if (method === 'GET' && path === '/api/admin/users') {
       requireAdmin(req);
-      return json(res, 200, db_.listUsers(db).map((u) => ({ ...u, approved: u.approved === 1 })));
+      return json(res, 200, db_.listUsers(db).map((u) => ({ ...u, approved: u.approved === 1, is_admin: isAdmin(u) })));
     }
 
     if (method === 'POST' && path === '/api/admin/users/approval') {

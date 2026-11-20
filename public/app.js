@@ -178,6 +178,7 @@ function renderSponsor() {
   const mine = state.children.filter((c) => c.mine).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   const onlyMine = state.view === 'mine';
   // 'Minhas' só aparece na aba Minhas: a tela Cartinhas mostra a lista inteira para apadrinhar mais.
+  $('mineLayout').hidden = !onlyMine;
   $('mine').hidden = !(onlyMine && mine.length);
   $('mineGrid').replaceChildren(...mine.map(card));
   $('mineEmpty').hidden = !(onlyMine && !mine.length);
@@ -349,20 +350,65 @@ async function release(c) {
 }
 
 async function loadUsers() {
-  const users = await api('/api/admin/users');
-  const pending = users.filter((u) => !u.approved).length;
-  document.querySelectorAll('[data-badge=pending]').forEach((b) => { b.textContent = pending; b.hidden = !pending; });
-  $('userRows').replaceChildren(
-    ...users.map((u) =>
-      h('tr', {},
-        h('td', { 'data-label': 'Nome', class: 'cell-title' }, u.google_name),
-        h('td', { 'data-label': 'E-mail' }, u.email),
-        h('td', { 'data-label': 'Primeiro acesso' }, formatDate(u.created_at)),
-        h('td', { 'data-label': 'Situação' }, u.approved ? 'Liberado' : h('strong', { class: 'warn' }, 'Aguardando')),
-        h('td', { class: 'cell-actions' }, h('button', { type: 'button', class: u.approved ? 'link danger' : 'btn btn-small', onclick: () => approve(u, !u.approved) }, u.approved ? 'Bloquear' : 'Liberar')),
-      ),
-    ),
+  state.users = await api('/api/admin/users');
+  renderUsers();
+}
+
+// Cruza logins com apadrinhamentos no navegador: os dados de padrinho já chegam ao gestor em /api/children.
+function renderUsers() {
+  const users = state.users || [];
+  const byEmail = new Map();
+  for (const c of state.children) {
+    if (!c.sponsor_email) continue;
+    if (!byEmail.has(c.sponsor_email)) byEmail.set(c.sponsor_email, []);
+    byEmail.get(c.sponsor_email).push(c);
+  }
+  const kidsOf = (u) => (byEmail.get(u.email) || []).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  const sponsors = users.filter((u) => !u.is_admin);
+  const pending = sponsors.filter((u) => !u.approved);
+  const approved = sponsors.filter((u) => u.approved);
+  const withKids = sponsors.filter((u) => kidsOf(u).length);
+  const idle = approved.filter((u) => !kidsOf(u).length);
+  document.querySelectorAll('[data-badge=pending]').forEach((b) => { b.textContent = pending.length; b.hidden = !pending.length; });
+
+  const stat = (icon, n, label, kind, filter) => h('button', { type: 'button', class: `stat stat-${kind} stat-btn${$('userFilter').value === filter ? ' active' : ''}`, 'data-tip': 'Filtrar a lista', onclick: () => { $('userFilter').value = filter; renderUsers(); } }, h('span', { class: 'stat-ico', 'aria-hidden': 'true' }, icon), h('div', {}, h('strong', {}, n), h('span', {}, label)));
+  $('userStats').replaceChildren(
+    stat('👥', sponsors.length, 'padrinhos logados', 'total', 'all'),
+    stat('⏳', pending.length, 'aguardando liberação', 'pending', 'pending'),
+    stat('💛', withKids.length, 'já apadrinharam', 'taken', 'sponsored'),
+    stat('👀', idle.length, 'liberados sem apadrinhar', 'free', 'idle'),
   );
+
+  const f = $('userFilter').value;
+  const q = $('userSearch').value.trim().toLowerCase();
+  const visible = users.filter((u) => {
+    const kids = kidsOf(u);
+    if (f === 'admins') { if (!u.is_admin) return false; }
+    else if (u.is_admin && f !== 'all') return false;
+    if (f === 'pending' && u.approved) return false;
+    if (f === 'sponsored' && !kids.length) return false;
+    if (f === 'idle' && (!u.approved || kids.length)) return false;
+    return !q || `${u.google_name} ${u.email} ${kids.map((c) => `${c.name} ${c.class_name}`).join(' ')}`.toLowerCase().includes(q);
+  });
+
+  $('userRows').replaceChildren(
+    ...visible.map((u) => {
+      const kids = kidsOf(u);
+      const phone = kids.find((c) => c.sponsor_phone_digits);
+      return h('tr', {},
+        h('td', { 'data-label': 'Nome', class: 'cell-title' }, u.google_name, u.is_admin ? [' ', h('span', { class: 'status-pill admin' }, 'Gestor')] : null),
+        h('td', { 'data-label': 'E-mail' }, u.email, phone ? [h('br'), h('a', { class: 'small', href: `https://wa.me/55${phone.sponsor_phone_digits}`, target: '_blank', rel: 'noopener' }, `📲 ${phone.sponsor_phone}`)] : null),
+        h('td', { 'data-label': 'Acessos', class: 'small' }, `1º: ${formatDate(u.created_at)}`, h('br'), h('span', { class: 'muted' }, `Último: ${formatDate(u.last_login)}`)),
+        h('td', { 'data-label': 'Situação' }, u.approved ? 'Liberado' : h('strong', { class: 'warn' }, 'Aguardando')),
+        h('td', { 'data-label': 'Apadrinhou', class: kids.length ? '' : 'empty-cell' },
+          kids.length
+            ? h('div', { class: 'kid-chips' }, ...kids.map((c) => h('span', { class: 'kid-chip', vars: classColor(c.class_name), title: c.delivered ? 'Presente entregue' : 'Entrega pendente' }, `${c.delivered ? '✅' : '🎁'} ${c.name}`, h('small', {}, c.class_name))))
+            : (u.is_admin ? '' : h('span', { class: 'muted small' }, 'Nenhuma criança'))),
+        h('td', { class: 'cell-actions' }, u.is_admin ? null : h('button', { type: 'button', class: u.approved ? 'link danger' : 'btn btn-small', onclick: () => approve(u, !u.approved) }, u.approved ? 'Bloquear' : 'Liberar')),
+      );
+    }),
+  );
+  if (!visible.length) $('userRows').replaceChildren(h('tr', {}, h('td', { colspan: 6, class: 'muted center' }, 'Ninguém nesse filtro.')));
 }
 
 async function approve(u, approved) {
@@ -672,6 +718,8 @@ document.addEventListener('DOMContentLoaded', () => {
   for (const id of ['onlyAvailable', 'ageFilter']) $(id).addEventListener('change', renderSponsor);
   for (const id of ['adminFilter', 'adminClass']) $(id).addEventListener('change', renderAdmin);
   $('adminSearch').addEventListener('input', renderAdmin);
+  $('userFilter').addEventListener('change', renderUsers);
+  $('userSearch').addEventListener('input', renderUsers);
   $('recheckBtn').addEventListener('click', () => location.reload());
   document.querySelectorAll('[data-logout]').forEach((b) => b.addEventListener('click', async () => {
     await api('/auth/logout', { method: 'POST', body: {} });

@@ -69,13 +69,30 @@
 
     <section id="sponsorView" hidden>
 
-      <div id="mine" hidden>
-        <h2>💛 Minhas crianças</h2>
-        <div class="grid" id="mineGrid"></div>
-      </div>
-      <div class="center empty-mine" id="mineEmpty" hidden>
-        <p>Você ainda não apadrinhou nenhuma criança.</p>
-        <button type="button" class="btn" data-view="sponsor">🎄 Ver cartinhas</button>
+      <div class="mine-layout" id="mineLayout" hidden>
+        <div class="mine-main">
+          <div id="mine" hidden>
+            <h2>💛 Minhas crianças</h2>
+            <div class="grid" id="mineGrid"></div>
+          </div>
+          <div class="center empty-mine" id="mineEmpty" hidden>
+            <p>Você ainda não apadrinhou nenhuma criança.</p>
+            <button type="button" class="btn" data-view="sponsor">🎄 Ver cartinhas</button>
+          </div>
+        </div>
+        <aside class="notice-board" aria-label="Quadro de avisos">
+          <h2>📌 Quadro de avisos</h2>
+          <article class="note note-yellow">
+            <span class="pin" aria-hidden="true"></span>
+            <h3>🎁 Sobre os presentes</h3>
+            <p>TEXTO_PENDENTE_PRESENTES</p>
+          </article>
+          <article class="note note-pink">
+            <span class="pin" aria-hidden="true"></span>
+            <h3>📍 Onde entregar</h3>
+            <p>TEXTO_PENDENTE_ENTREGA</p>
+          </article>
+        </aside>
       </div>
 
       <div class="toolbar" id="sponsorToolbar">
@@ -127,10 +144,21 @@
       </div>
 
       <div id="panelUsers" hidden>
-      <p class="muted small">Quem fez login aparece aqui. Só quem estiver liberado vê as fotos e cartinhas.</p>
+      <div class="stats" id="userStats"></div>
+      <div class="toolbar">
+        <select id="userFilter" aria-label="Filtrar padrinhos">
+          <option value="all">Todos os padrinhos</option>
+          <option value="pending">Aguardando liberação</option>
+          <option value="sponsored">Já apadrinharam</option>
+          <option value="idle">Liberados sem apadrinhar</option>
+          <option value="admins">Gestores</option>
+        </select>
+        <input type="search" id="userSearch" placeholder="Buscar padrinho ou criança">
+      </div>
+      <p class="muted small">Quem fez login aparece aqui. Só quem estiver liberado vê as fotos e cartinhas. Os números não contam os gestores.</p>
       <div class="table-wrap">
         <table class="table">
-          <thead><tr><th>Nome (Google)</th><th>E-mail</th><th>Primeiro acesso</th><th>Situação</th><th></th></tr></thead>
+          <thead><tr><th>Nome (Google)</th><th>E-mail</th><th>Acessos</th><th>Situação</th><th>Apadrinhou</th><th></th></tr></thead>
           <tbody id="userRows"></tbody>
         </table>
       </div>
