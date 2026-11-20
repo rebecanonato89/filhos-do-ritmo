@@ -178,6 +178,7 @@ function renderSponsor() {
   const mine = state.children.filter((c) => c.mine).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   const onlyMine = state.view === 'mine';
   // 'Minhas' só aparece na aba Minhas: a tela Cartinhas mostra a lista inteira para apadrinhar mais.
+  $('mineLayout').hidden = !onlyMine;
   $('mine').hidden = !(onlyMine && mine.length);
   $('mineGrid').replaceChildren(...mine.map(card));
   $('mineEmpty').hidden = !(onlyMine && !mine.length);
@@ -258,7 +259,9 @@ async function submitSponsor(ev) {
     await api(`/api/children/${c.id}/sponsor`, { method: 'POST', body });
     state.me.sponsor = body;
     $('sponsorDialog').close();
-    toast(`Obrigado! ${c.name} agora é sua criança 💛`);
+    $('sponsoredName').textContent = c.name;
+    $('sponsoredDialog').showModal();
+    document.querySelectorAll('[data-view=mine]').forEach((b) => b.classList.add('pulse'));
   } catch (err) {
     $('dlgError').textContent = err.message;
     $('dlgError').hidden = false;
@@ -349,20 +352,69 @@ async function release(c) {
 }
 
 async function loadUsers() {
-  const users = await api('/api/admin/users');
-  const pending = users.filter((u) => !u.approved).length;
-  document.querySelectorAll('[data-badge=pending]').forEach((b) => { b.textContent = pending; b.hidden = !pending; });
-  $('userRows').replaceChildren(
-    ...users.map((u) =>
-      h('tr', {},
-        h('td', { 'data-label': 'Nome', class: 'cell-title' }, u.google_name),
-        h('td', { 'data-label': 'E-mail' }, u.email),
-        h('td', { 'data-label': 'Primeiro acesso' }, formatDate(u.created_at)),
-        h('td', { 'data-label': 'Situação' }, u.approved ? 'Liberado' : h('strong', { class: 'warn' }, 'Aguardando')),
-        h('td', { class: 'cell-actions' }, h('button', { type: 'button', class: u.approved ? 'link danger' : 'btn btn-small', onclick: () => approve(u, !u.approved) }, u.approved ? 'Bloquear' : 'Liberar')),
-      ),
-    ),
+  state.users = await api('/api/admin/users');
+  renderUsers();
+}
+
+// Cruza logins com apadrinhamentos no navegador: os dados de padrinho já chegam ao gestor em /api/children.
+function renderUsers() {
+  const users = state.users || [];
+  const byEmail = new Map();
+  for (const c of state.children) {
+    if (!c.sponsor_email) continue;
+    if (!byEmail.has(c.sponsor_email)) byEmail.set(c.sponsor_email, []);
+    byEmail.get(c.sponsor_email).push(c);
+  }
+  const kidsOf = (u) => (byEmail.get(u.email) || []).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  const sponsors = users.filter((u) => !u.is_admin);
+  const pending = sponsors.filter((u) => !u.approved);
+  const approved = sponsors.filter((u) => u.approved);
+  const withKids = sponsors.filter((u) => kidsOf(u).length);
+  const idle = approved.filter((u) => !kidsOf(u).length);
+  document.querySelectorAll('[data-badge=pending]').forEach((b) => { b.textContent = pending.length; b.hidden = !pending.length; });
+  // A gestora não percebeu o contador pequeno: aviso grande enquanto houver gente esperando.
+  const onUsers = state.view === 'admin' && !$('panelUsers').hidden;
+  $('adminAlert').hidden = !pending.length || onUsers;
+  $('adminAlert').textContent = `🔔 ${pending.length} ${pending.length === 1 ? 'pessoa aguardando' : 'pessoas aguardando'} liberação · Ver e liberar →`;
+
+  const stat = (icon, n, label, kind, filter) => h('button', { type: 'button', class: `stat stat-${kind} stat-btn${$('userFilter').value === filter ? ' active' : ''}`, 'data-tip': 'Filtrar a lista', onclick: () => { $('userFilter').value = filter; renderUsers(); } }, h('span', { class: 'stat-ico', 'aria-hidden': 'true' }, icon), h('div', {}, h('strong', {}, n), h('span', {}, label)));
+  $('userStats').replaceChildren(
+    stat('👥', sponsors.length, 'padrinhos logados', 'total', 'all'),
+    stat('⏳', pending.length, 'aguardando liberação', 'pending', 'pending'),
+    stat('💛', withKids.length, 'já apadrinharam', 'taken', 'sponsored'),
+    stat('👀', idle.length, 'liberados sem apadrinhar', 'free', 'idle'),
   );
+
+  const f = $('userFilter').value;
+  const q = $('userSearch').value.trim().toLowerCase();
+  const visible = users.filter((u) => {
+    const kids = kidsOf(u);
+    if (f === 'admins') { if (!u.is_admin) return false; }
+    else if (u.is_admin && f !== 'all') return false;
+    if (f === 'pending' && u.approved) return false;
+    if (f === 'sponsored' && !kids.length) return false;
+    if (f === 'idle' && (!u.approved || kids.length)) return false;
+    return !q || `${u.google_name} ${u.email} ${kids.map((c) => `${c.name} ${c.class_name}`).join(' ')}`.toLowerCase().includes(q);
+  });
+
+  $('userRows').replaceChildren(
+    ...visible.map((u) => {
+      const kids = kidsOf(u);
+      const phone = kids.find((c) => c.sponsor_phone_digits);
+      return h('tr', {},
+        h('td', { 'data-label': 'Nome', class: 'cell-title' }, u.google_name, u.is_admin ? [' ', h('span', { class: 'status-pill admin' }, 'Gestor')] : null),
+        h('td', { 'data-label': 'E-mail' }, u.email, phone ? [h('br'), h('a', { class: 'small', href: `https://wa.me/55${phone.sponsor_phone_digits}`, target: '_blank', rel: 'noopener' }, `📲 ${phone.sponsor_phone}`)] : null),
+        h('td', { 'data-label': 'Acessos', class: 'small' }, `1º: ${formatDate(u.created_at)}`, h('br'), h('span', { class: 'muted' }, `Último: ${formatDate(u.last_login)}`)),
+        h('td', { 'data-label': 'Situação' }, u.approved ? 'Liberado' : h('strong', { class: 'warn' }, 'Aguardando')),
+        h('td', { 'data-label': 'Apadrinhou', class: kids.length ? '' : 'empty-cell' },
+          kids.length
+            ? h('div', { class: 'kid-chips' }, ...kids.map((c) => h('span', { class: 'kid-chip', vars: classColor(c.class_name), title: c.delivered ? 'Presente entregue' : 'Entrega pendente' }, `${c.delivered ? '✅' : '🎁'} ${c.name}`, h('small', {}, c.class_name))))
+            : (u.is_admin ? '' : h('span', { class: 'muted small' }, 'Nenhuma criança'))),
+        h('td', { class: 'cell-actions' }, u.is_admin ? null : h('button', { type: 'button', class: u.approved ? 'link danger' : 'btn btn-small', onclick: () => approve(u, !u.approved) }, u.approved ? 'Bloquear' : 'Liberar')),
+      );
+    }),
+  );
+  if (!visible.length) $('userRows').replaceChildren(h('tr', {}, h('td', { colspan: 6, class: 'muted center' }, 'Ninguém nesse filtro.')));
 }
 
 async function approve(u, approved) {
@@ -576,6 +628,46 @@ async function bulkUpload(files, kind) {
   await refresh();
 }
 
+// ---------- Entrega (só para liberados) ----------
+
+const fmtPhone = (d) => `(${d.slice(0, 2)}) ${d.slice(2, -4)}-${d.slice(-4)}`;
+const WHATS_HELLO = 'Olá! Sou padrinho/madrinha do Natal Solidário Filhos do Ritmo e quero combinar a entrega do presente.';
+
+async function loadDelivery() {
+  try {
+    const d = await api('/api/delivery');
+    $('deliveryInfo').replaceChildren(
+      h('p', {}, 'Até ', h('strong', {}, d.deadline), ', no ', h('strong', {}, d.place), ':', h('br'), d.address, '.'),
+      h('p', {}, h('strong', {}, 'Antes de levar, combine a entrega'), ' com um dos responsáveis:'),
+      h('div', { class: 'note-contacts' }, ...d.contacts.map((c) =>
+        h('a', { class: 'btn btn-small btn-whats', href: `https://wa.me/55${c.phone}?text=${encodeURIComponent(WHATS_HELLO)}`, target: '_blank', rel: 'noopener' }, `📲 ${c.name.split(' ')[0]}`, h('small', {}, fmtPhone(c.phone))))),
+    );
+    $('sponsoredDelivery').replaceChildren('📦 Entregue o presente ', h('strong', {}, `até ${d.deadline}`), ' no ', h('strong', {}, d.place), ` (${d.address}), combinando antes com a organização.`);
+  } catch {
+    $('deliveryInfo').replaceChildren(h('p', {}, 'Fale com a organização para combinar a entrega.'));
+  }
+}
+
+// ---------- Orientação ----------
+
+// Uma vez por padrinho neste aparelho: quem entra rápido nem chega a abrir a aba Minhas.
+function showWelcomeOnce() {
+  if (state.me.is_admin) return;
+  const key = `fdr_welcome_v1:${state.me.email}`;
+  try { if (localStorage.getItem(key)) return; } catch { /* sem storage: mostra sempre */ }
+  $('welcomeRules').replaceChildren($('giftRules').cloneNode(true));
+  $('welcomeRules').firstChild.removeAttribute('id');
+  $('welcomeDialog').showModal();
+  try { localStorage.setItem(key, '1'); } catch { /* ignora */ }
+}
+
+function goToPendingUsers() {
+  setView('admin');
+  document.querySelector('.seg[data-panel=users]').click();
+  $('userFilter').value = 'pending';
+  renderUsers();
+}
+
 // ---------- Ciclo ----------
 
 function render() {
@@ -592,6 +684,7 @@ function setView(view) {
   state.view = view;
   document.querySelectorAll('.tab[data-view], .bottomnav [data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   window.scrollTo({ top: 0 });
+  if (view === 'mine') document.querySelectorAll('[data-view=mine]').forEach((b) => b.classList.remove('pulse'));
   render();
   refresh();
 }
@@ -632,6 +725,8 @@ async function boot() {
   document.querySelectorAll('[data-admin]').forEach((el) => (el.hidden = !state.me.is_admin));
   $('topNotice').hidden = false;
   await refresh();
+  loadDelivery();
+  showWelcomeOnce();
   state.timer = setInterval(() => document.visibilityState === 'visible' && !$('sponsorDialog').open && !$('editDialog').open && !$('uploadDialog').open && !$('imgDialog').open && refresh(), POLL_MS);
 }
 
@@ -650,6 +745,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let fitNamesTimer;
   window.addEventListener('resize', () => { clearTimeout(fitNamesTimer); fitNamesTimer = setTimeout(fitAllNames, 150); });
   $('sponsorForm').addEventListener('submit', submitSponsor);
+  $('welcomeOk').addEventListener('click', () => $('welcomeDialog').close());
+  $('sponsoredMore').addEventListener('click', () => $('sponsoredDialog').close());
+  $('sponsoredGo').addEventListener('click', () => { $('sponsoredDialog').close(); setView('mine'); });
+  $('adminAlert').addEventListener('click', goToPendingUsers);
   $('dlgCancel').addEventListener('click', () => $('sponsorDialog').close());
   $('photoClose').addEventListener('click', () => $('photoDialog').close());
   $('editForm').addEventListener('submit', submitEdit);
@@ -663,6 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.seg[data-panel]').forEach((x) => x.classList.toggle('active', x === b));
     $('panelKids').hidden = b.dataset.panel !== 'kids';
     $('panelUsers').hidden = b.dataset.panel !== 'users';
+    if (state.users) renderUsers(); // atualiza o aviso de pendentes
   }));
   $('editCancel').addEventListener('click', () => $('editDialog').close());
   $('csvInput').addEventListener('change', (e) => e.target.files[0] && importCsv(e.target.files[0]).finally(() => (e.target.value = '')));
@@ -672,6 +772,8 @@ document.addEventListener('DOMContentLoaded', () => {
   for (const id of ['onlyAvailable', 'ageFilter']) $(id).addEventListener('change', renderSponsor);
   for (const id of ['adminFilter', 'adminClass']) $(id).addEventListener('change', renderAdmin);
   $('adminSearch').addEventListener('input', renderAdmin);
+  $('userFilter').addEventListener('change', renderUsers);
+  $('userSearch').addEventListener('input', renderUsers);
   $('recheckBtn').addEventListener('click', () => location.reload());
   document.querySelectorAll('[data-logout]').forEach((b) => b.addEventListener('click', async () => {
     await api('/auth/logout', { method: 'POST', body: {} });

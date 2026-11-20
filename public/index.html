@@ -46,6 +46,7 @@
 
   <main id="app">
     <section class="center" id="loading"><p>Carregando…</p></section>
+    <button type="button" class="admin-alert" id="adminAlert" hidden></button>
 
     <section class="center" id="loginView" hidden>
       <img src="/logo.jpg" alt="Filhos do Ritmo — Na batida de vários corações" class="hero-logo">
@@ -69,13 +70,35 @@
 
     <section id="sponsorView" hidden>
 
-      <div id="mine" hidden>
-        <h2>💛 Minhas crianças</h2>
-        <div class="grid" id="mineGrid"></div>
-      </div>
-      <div class="center empty-mine" id="mineEmpty" hidden>
-        <p>Você ainda não apadrinhou nenhuma criança.</p>
-        <button type="button" class="btn" data-view="sponsor">🎄 Ver cartinhas</button>
+      <div class="mine-layout" id="mineLayout" hidden>
+        <div class="mine-main">
+          <div id="mine" hidden>
+            <h2>💛 Minhas crianças</h2>
+            <div class="grid" id="mineGrid"></div>
+          </div>
+          <div class="center empty-mine" id="mineEmpty" hidden>
+            <p>Você ainda não apadrinhou nenhuma criança.</p>
+            <button type="button" class="btn" data-view="sponsor">🎄 Ver cartinhas</button>
+          </div>
+        </div>
+        <aside class="notice-board" aria-label="Quadro de avisos">
+          <h2>📌 Quadro de avisos</h2>
+          <article class="note note-pink">
+            <span class="pin" aria-hidden="true"></span>
+            <h3>📍 Onde e até quando entregar</h3>
+            <div id="deliveryInfo"><p class="muted small">Carregando…</p></div>
+          </article>
+          <article class="note note-yellow">
+            <span class="pin" aria-hidden="true"></span>
+            <h3>🎁 Sobre os presentes</h3>
+            <ul class="note-list" id="giftRules">
+              <li>Apadrinhe <strong>uma ou mais crianças</strong> e escolha <strong>um ou mais presentes</strong> da cartinha de cada uma.</li>
+              <li>O presente pode ser <strong>novo ou usado, em boas condições de uso</strong>.</li>
+              <li>Roupas e tênis de marca podem ser <strong>genéricos</strong>, que são bem mais baratos.</li>
+              <li>Não encontrou o pedido ou ele não cabe no orçamento? Pode dar <strong>outro presente adequado à idade</strong> da criança. Os tamanhos de roupa e calçado estão na cartinha.</li>
+            </ul>
+          </article>
+        </aside>
       </div>
 
       <div class="toolbar" id="sponsorToolbar">
@@ -127,10 +150,21 @@
       </div>
 
       <div id="panelUsers" hidden>
-      <p class="muted small">Quem fez login aparece aqui. Só quem estiver liberado vê as fotos e cartinhas.</p>
+      <div class="stats" id="userStats"></div>
+      <div class="toolbar">
+        <select id="userFilter" aria-label="Filtrar padrinhos">
+          <option value="all">Todos os padrinhos</option>
+          <option value="pending">Aguardando liberação</option>
+          <option value="sponsored">Já apadrinharam</option>
+          <option value="idle">Liberados sem apadrinhar</option>
+          <option value="admins">Gestores</option>
+        </select>
+        <input type="search" id="userSearch" placeholder="Buscar padrinho ou criança">
+      </div>
+      <p class="muted small">Quem fez login aparece aqui. Só quem estiver liberado vê as fotos e cartinhas. Os números não contam os gestores.</p>
       <div class="table-wrap">
         <table class="table">
-          <thead><tr><th>Nome (Google)</th><th>E-mail</th><th>Primeiro acesso</th><th>Situação</th><th></th></tr></thead>
+          <thead><tr><th>Nome (Google)</th><th>E-mail</th><th>Acessos</th><th>Situação</th><th>Apadrinhou</th><th></th></tr></thead>
           <tbody id="userRows"></tbody>
         </table>
       </div>
@@ -241,6 +275,21 @@
         <button type="submit" class="btn">Salvar</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="welcomeDialog" class="guide-dialog" aria-labelledby="welcomeTitle">
+    <h2 id="welcomeTitle">🎄 Bem-vindo(a) ao Natal Solidário!</h2>
+    <div id="welcomeRules"></div>
+    <p class="guide-tip">📦 Entrega <strong>até 01/12</strong>, combinando antes com a organização. Depois de apadrinhar, a criança fica na aba <strong>💛 Minhas</strong>, com o endereço e os contatos para a entrega.</p>
+    <div class="actions"><button type="button" class="btn" id="welcomeOk">Entendi, ver as cartinhas</button></div>
+  </dialog>
+
+  <dialog id="sponsoredDialog" class="guide-dialog" aria-labelledby="sponsoredTitle">
+    <div class="guide-big" aria-hidden="true">💛</div>
+    <h2 id="sponsoredTitle">Obrigado! <span id="sponsoredName"></span> agora é sua criança.</h2>
+    <p class="guide-tip" id="sponsoredDelivery">📦 Entregue o presente <strong>até 01/12</strong>, combinando antes com a organização.</p>
+    <p>Ela fica guardada na aba <strong>💛 Minhas</strong>, com os pedidos, os tamanhos, o endereço e os contatos para a entrega.</p>
+    <div class="actions"><button type="button" class="btn btn-ghost" id="sponsoredMore">Escolher mais crianças</button><button type="button" class="btn" id="sponsoredGo">💛 Ver em Minhas</button></div>
   </dialog>
 
   <dialog id="photoDialog" class="photo-dialog">

@@ -6,6 +6,7 @@ import { join, basename, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as db_ from './db.mjs';
 import * as auth from './auth.mjs';
+import { DELIVERY } from './delivery.mjs';
 
 const PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
 
@@ -227,6 +228,11 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
     }
 
     // ---- Padrinho ----
+    if (method === 'GET' && path === '/api/delivery') {
+      requireViewer(req);
+      return json(res, 200, DELIVERY);
+    }
+
     if (method === 'GET' && path === '/api/me') {
       const user = auth.readSession(req, config);
       if (!user) return json(res, 200, { authenticated: false });
@@ -369,7 +375,7 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
 
     if (method === 'GET' && path === '/api/admin/users') {
       requireAdmin(req);
-      return json(res, 200, db_.listUsers(db).map((u) => ({ ...u, approved: u.approved === 1 })));
+      return json(res, 200, db_.listUsers(db).map((u) => ({ ...u, approved: u.approved === 1, is_admin: isAdmin(u) })));
     }
 
     if (method === 'POST' && path === '/api/admin/users/approval') {
