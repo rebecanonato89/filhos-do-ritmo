@@ -286,3 +286,11 @@ test('idade e tamanhos de 1 dígito ganham zero à esquerda; letras ficam iguais
   assert.equal(z.age, '06');
   assert.deepEqual(z.sizes, { shirt: 'P', pants: '08', shoe: '30' });
 });
+
+test('política de privacidade é pública (exigida pelo Google para publicar o login)', async () => {
+  const res = await fetch(`${base}/privacidade`);
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.match(html, /Política de Privacidade/);
+  assert.match(html, /styles\.css\?v=/);
+});

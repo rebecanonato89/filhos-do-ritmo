@@ -569,3 +569,10 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
   .lc-head .envelope { width: 26px; height: 26px; }
   .lc-head .lc-dear { font-size: .72rem; }
 }
+
+/* Página pública de privacidade (exigida pelo Google para publicar o login). */
+.legal-page { background: #fffaf3; }
+.legal { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; line-height: 1.6; color: #2b2118; }
+.legal h1 { font-size: 1.6rem; margin: 12px 0 4px; }
+.legal h2 { font-size: 1.1rem; margin: 24px 0 6px; }
+.legal a { color: #c45a0c; }
