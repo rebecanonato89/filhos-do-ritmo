@@ -21,6 +21,7 @@ const STATIC = {
   '/icon-192.png': ['icon-192.png', 'image/png'],
   '/icon-512.png': ['icon-512.png', 'image/png'],
   '/pix-qr.png': ['pix-qr.png', 'image/png'],
+  '/og.jpg': ['og.jpg', 'image/jpeg'],
   '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json; charset=utf-8'],
 };
 
