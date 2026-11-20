@@ -310,3 +310,11 @@ test('local e contatos de entrega só para padrinhos liberados', async () => {
   assert.equal(res.status, 200);
   assert.equal((await res.json()).contacts.length, 3);
 });
+
+test('prévia do link (Open Graph) é pública', async () => {
+  const html = await (await fetch(`${base}/`)).text();
+  assert.match(html, /property="og:image" content="https:\/\/filhosdoritmo\.rebecanonato89\.dev\/og\.jpg"/);
+  const img = await fetch(`${base}/og.jpg`);
+  assert.equal(img.status, 200);
+  assert.equal(img.headers.get('content-type'), 'image/jpeg');
+});
