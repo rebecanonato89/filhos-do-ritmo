@@ -578,7 +578,7 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
 .legal a { color: #c45a0c; }
 
 /* ===== Minhas: crianças à esquerda, quadro de avisos fixo à direita ===== */
-.mine-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 22px; align-items: start; }
+.mine-layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 22px; align-items: start; }
 .mine-main { min-width: 0; }
 .mine-main .empty-mine { margin-top: 6vh; }
 .notice-board {
@@ -636,3 +636,6 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
 .note-contacts { display: flex; flex-wrap: wrap; gap: 6px; }
 .note-contacts .btn { flex-direction: column; line-height: 1.15; padding: 6px 10px; min-height: 0; }
 .note-contacts .btn small { font-weight: 500; font-size: .72rem; opacity: .9; }
+
+.notify-btn { margin: 0 0 12px; }
+.notify-btn:disabled { opacity: .8; cursor: default; white-space: normal; text-align: left; }
