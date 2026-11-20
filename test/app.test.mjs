@@ -318,3 +318,10 @@ test('prévia do link (Open Graph) é pública', async () => {
   assert.equal(img.status, 200);
   assert.equal(img.headers.get('content-type'), 'image/jpeg');
 });
+
+test('"online agora" marca quem consultou o portal no último minuto', async () => {
+  await get('/api/children', alice);
+  const users = await (await get('/api/admin/users', admin)).json();
+  assert.equal(users.find((u) => u.email === 'alice@gmail.com').online, true);
+  assert.ok(users.every((u) => typeof u.online === 'boolean'));
+});

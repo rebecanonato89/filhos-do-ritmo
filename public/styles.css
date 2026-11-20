@@ -639,3 +639,91 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
 
 .notify-btn { margin: 0 0 12px; }
 .notify-btn:disabled { opacity: .8; cursor: default; white-space: normal; text-align: left; }
+
+/* ===== Padrão da cartinha: mesmos espaçamentos em todas (escala 4 · 8 · 12 · 16) =====
+   Vem por último para valer sobre os ajustes antigos por altura de tela. O rodapé
+   reserva espaço para a faixa listrada: o botão nunca encosta nela. */
+.letter-card { padding: 12px 12px 20px; }
+.letter-card::before { top: 5px; }
+.letter-card::after { bottom: 6px; }
+.lc-head { min-height: 30px; margin-bottom: 8px; }
+.polaroid-big { margin: 0 0 8px; padding: 4px; }
+.lc-id-below { gap: 4px; }
+.lc-q { margin: 8px 0 4px; }
+.lc-wishes { gap: 4px; }
+.lc-sizes { margin-top: 8px; }
+.lc-footer { margin-top: auto; padding-top: 12px; }
+.lc-field.lc-wish { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
+.lc-field.lc-wish[title] { cursor: help; }
+.lc-field.lc-wish.open { white-space: normal; }
+.lc-field.lc-wish.empty { opacity: .45; }
+.lc-sizes-row.three .lc-box { min-height: 1.5em; }
+/* Lápis desenhado e centralizado no círculo, igual em todos os tamanhos. */
+.pencil { display: inline-grid; place-items: center; padding: 0; line-height: 1; }
+.ico-pencil { width: 16px; height: 16px; fill: none; stroke: var(--orange-dark, #c45a0c); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pencil:hover .ico-pencil { stroke: var(--orange, #e8711a); }
+@media (min-width: 721px) and (max-height: 650px) {
+  .letter-card { padding: 8px 10px 18px; }
+  .lc-head { margin-bottom: 4px; }
+  .polaroid-big { margin-bottom: 4px; padding: 3px; }
+  .lc-q { margin: 4px 0 2px; }
+  .lc-wishes { gap: 2px; }
+  .lc-sizes { margin-top: 4px; }
+  .lc-footer { padding-top: 8px; }
+}
+/* Cartinhas não esticam até a mais alta da linha: o botão fica sempre logo abaixo dos tamanhos. */
+#classes .grid, #mineGrid { align-items: start; }
+.lc-wishes li { min-width: 0; }
+.lc-id-below .lc-label { flex-wrap: nowrap; white-space: nowrap; }
+.lc-id-below .gender-tag { padding: 0 6px; font-size: .95rem; line-height: 1.4; }
+.lc-footer .btn, .lc-footer > .badge { min-height: 42px; display: flex; align-items: center; justify-content: center; text-align: center; }
+@media (min-width: 721px) and (max-height: 650px) { .lc-footer .btn, .lc-footer > .badge { min-height: 34px; } }
+.lc-id-below .gender-tag { line-height: 1.1; font-size: .9rem; }
+.lc-id-below .lc-label { min-height: 1.6em; align-items: center; }
+.lc-footer .btn, .lc-footer > .badge { box-sizing: border-box; height: 46px; min-height: 0; padding-top: 0; padding-bottom: 0; }
+@media (min-width: 721px) and (max-height: 650px) { .lc-footer .btn, .lc-footer > .badge { height: 36px; } }
+.letter-card.is-mine { border-width: 3px; }
+.stat-online { --sc: #16a34a; }
+.online-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, .25); margin-right: 7px; vertical-align: middle; }
+#userStats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 980px) { #userStats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px) { #userStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ===== Minhas: layout conforme quantas crianças o padrinho tem =====
+   0 ou 3+: quadro em cima, largura toda, avisos lado a lado.
+   1 ou 2: cartinhas à esquerda (largura exata) e quadro ocupando o resto, sem rolagem interna. */
+.mine-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+.mine-layout[data-count="0"] .notice-board, .mine-layout[data-count="many"] .notice-board { order: -1; }
+.notice-board { position: static; max-height: none; overflow: visible; }
+.notice-board .notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px 22px; align-items: start; }
+.notice-board .note { margin: 6px 4px 0; }
+@media (min-width: 981px) {
+  .mine-layout[data-count="1"] { grid-template-columns: 320px minmax(0, 1fr); }
+  .mine-layout[data-count="2"] { grid-template-columns: 664px minmax(0, 1fr); }
+  .mine-layout[data-count="1"] #mineGrid { grid-template-columns: minmax(0, 1fr); }
+  .mine-layout[data-count="2"] #mineGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mine-layout[data-count="1"] .notice-board, .mine-layout[data-count="2"] .notice-board { margin-top: 44px; } /* alinha com o topo das cartinhas */
+}
+@media (max-width: 980px) { .mine-layout .notice-board { order: 0; } .mine-layout[data-count="0"] .notice-board { order: -1; } }
+
+/* Contatos: uma linha por pessoa, nunca quebra dentro do botão. */
+.note-contacts { display: grid; gap: 6px; }
+.contact-btn {
+  display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 10px; text-decoration: none;
+  background: #25d366; color: #0b3d1e; font-size: .9rem; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,.12);
+}
+.contact-btn:hover { background: #1fb956; }
+.contact-btn strong { min-width: 4.6em; }
+.contact-go { margin-left: auto; font-size: .76rem; font-weight: 700; opacity: .85; }
+
+/* Rodapé da cartinha em Minhas: textos curtos, sem quebra de linha. */
+.lc-footer .badge.mine { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.share-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.share-row .btn { height: 42px; padding: 0 10px; white-space: nowrap; display: flex; align-items: center; justify-content: center; font-size: .9rem; }
+.contact-btn { min-width: 0; }
+.contact-btn strong { min-width: 0; flex: none; }
+.contact-btn span:not(.contact-go) { overflow: hidden; text-overflow: ellipsis; }
+.contact-go { font-size: 1rem; }
+.notice-board .note { transform: none; } /* notas retas: leitura mais fácil com botões dentro */
+.notice-board .note-yellow { transform: rotate(-.6deg); }
+.lc-head .lc-class { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; max-width: 55%; }

@@ -66,6 +66,28 @@ const formatDate = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR', { dateS
 // ---------- Padrinho ----------
 
 // Card no formato da cartinha impressa do Natal Solidário.
+// Ícone desenhado (o emoji ✏️ fica fora do centro e torto dentro do botão redondo).
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function pencilIcon() {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', 'ico-pencil');
+  for (const d of ['M4 20h4L19 9a2.83 2.83 0 0 0-4-4L4 16v4z', 'M13.5 6.5l4 4']) {
+    const p = document.createElementNS(SVG_NS, 'path');
+    p.setAttribute('d', d);
+    svg.append(p);
+  }
+  return svg;
+}
+
+// Pedido longo fica numa linha só com "..."; o texto inteiro aparece ao passar o mouse
+// (title) ou ao tocar no celular (alterna .open).
+function wish(text) {
+  if (!text) return h('span', { class: 'lc-field hand lc-wish empty' }, ' ');
+  return h('span', { class: 'lc-field hand lc-wish', title: text, tabindex: '0', onclick: (e) => e.currentTarget.classList.toggle('open') }, text);
+}
+
 function field(value, cls = '') {
   return h('span', { class: `lc-field hand ${cls}` }, value || ' ');
 }
@@ -99,12 +121,16 @@ function card(c) {
     : h('div', { class: 'polaroid-img empty' }, '🎁');
 
   let footer;
-  if (c.mine) {
+  // Na lista geral a cartinha do padrinho tem o rodapé da mesma altura das outras;
+  // WhatsApp/Copiar ficam na aba Minhas.
+  if (c.mine && state.view !== 'mine') {
+    footer = h('div', { class: 'badge mine' }, c.delivered ? '✅ Sua criança · entregue' : '💛 Sua criança');
+  } else if (c.mine) {
     footer = h('div', {},
       h('div', { class: 'badge mine' }, c.delivered ? '✅ Sua criança · presente entregue' : '💛 Sua criança · entregar até 01/12'),
       h('div', { class: 'share-row' },
         h('a', { class: 'btn btn-small btn-whats', href: `https://wa.me/?text=${encodeURIComponent(childSummary(c))}`, target: '_blank', rel: 'noopener', 'data-tip': 'Enviar os dados para você ou sua família' }, '📲 WhatsApp'),
-        h('button', { type: 'button', class: 'btn btn-small btn-ghost', onclick: () => copyText(childSummary(c)), 'data-tip': 'Copiar os dados da cartinha' }, '📋 Copiar dados'),
+        h('button', { type: 'button', class: 'btn btn-small btn-ghost', onclick: () => copyText(childSummary(c)), 'data-tip': 'Copiar os dados da cartinha' }, '📋 Copiar'),
       ));
   } else if (c.status === 'sponsored') {
     footer = h('div', { class: 'badge taken' }, 'Já apadrinhada');
@@ -118,9 +144,9 @@ function card(c) {
     'article',
     { class: `card letter-card ${c.status}${c.mine ? ' is-mine' : ''}`, vars: classColor(c.class_name) },
     h('div', { class: 'lc-head' },
-      h('span', { class: 'lc-class', vars: classColor(c.class_name) }, c.class_name),
+      h('span', { class: 'lc-class', vars: classColor(c.class_name), title: c.class_name }, c.class_name),
       h('span', { class: 'lc-dear' }, 'Querido Papai Noel...'),
-      state.me.is_admin ? h('button', { type: 'button', class: 'pencil', onclick: () => openEdit(c), 'data-tip': 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, '✏️') : null,
+      state.me.is_admin ? h('button', { type: 'button', class: 'pencil', onclick: () => openEdit(c), 'data-tip': 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, pencilIcon()) : null,
       c.letter_photo_url
         ? h('button', { type: 'button', class: 'envelope', onclick: () => openImage(c, 'letter'), 'data-tip': 'Ver a cartinha original', 'aria-label': `Ver a cartinha de ${c.name}` }, h('span', { 'aria-hidden': 'true' }, '✉️'), h('span', { class: 'env-label' }, ' Cartinha'))
         : null,
@@ -131,16 +157,15 @@ function card(c) {
       h('span', { class: 'lc-label' }, 'Meu nome é:'),
       field(c.name, 'lc-name'),
       h('span', { class: 'lc-label' }, 'Eu tenho ', field(c.age, 'lc-age'), ' anos.',
-        c.gender ? h('span', { class: `gender-tag g-${c.gender}` }, c.gender === 'F' ? '👧 Menina' : '👦 Menino') : null),
+      ),
     ),
     h('p', { class: 'lc-q' }, 'Neste Natal, eu gostaria de ganhar:'),
-    h('ol', { class: 'lc-wishes' }, c.gifts.map((g) => h('li', {}, field(g)))),
-    sizes.some(([, v]) => v)
-      ? h('div', { class: 'lc-sizes' },
-          h('p', { class: 'lc-sizes-title' }, 'Meus tamanhos'),
-          h('div', { class: 'lc-sizes-row three' }, sizes.map(([label, v]) =>
-            h('span', { class: 'lc-size' }, `${label} `, field(v, 'lc-box')))))
-      : null,
+    // Sempre 3 linhas de pedido e o bloco de tamanhos: todas as cartinhas com a mesma altura.
+    h('ol', { class: 'lc-wishes' }, [0, 1, 2].map((i) => h('li', {}, wish(c.gifts[i])))),
+    h('div', { class: 'lc-sizes' },
+      h('p', { class: 'lc-sizes-title' }, 'Meus tamanhos'),
+      h('div', { class: 'lc-sizes-row three' }, sizes.map(([label, v]) =>
+        h('span', { class: 'lc-size' }, `${label} `, field(v, 'lc-box'))))),
     h('div', { class: 'lc-footer' }, footer),
   );
 }
@@ -179,6 +204,8 @@ function renderSponsor() {
   const onlyMine = state.view === 'mine';
   // 'Minhas' só aparece na aba Minhas: a tela Cartinhas mostra a lista inteira para apadrinhar mais.
   $('mineLayout').hidden = !onlyMine;
+  // Layout de Minhas depende de quantas crianças: 1–2 ao lado do quadro; 0 ou 3+ com o quadro em cima.
+  $('mineLayout').dataset.count = mine.length > 2 ? 'many' : String(mine.length);
   $('mine').hidden = !(onlyMine && mine.length);
   $('mineGrid').replaceChildren(...mine.map(card));
   $('mineEmpty').hidden = !(onlyMine && !mine.length);
@@ -310,8 +337,8 @@ function renderAdmin() {
       h('tr', { class: c.status },
         h('td', { 'data-label': 'Turma' }, h('span', { class: 'class-pill', vars: classColor(c.class_name) }, c.class_name)),
         h('td', { 'data-label': 'Criança', class: 'cell-title' },
-          h('button', { type: 'button', class: 'pencil pencil-sm', onclick: () => openEdit(c), 'data-tip': 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, '✏️'),
-          c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age}${c.gender ? `, ${c.gender === 'F' ? 'menina' : 'menino'}` : ''})`) : ''),
+          h('button', { type: 'button', class: 'pencil pencil-sm', onclick: () => openEdit(c), 'data-tip': 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, pencilIcon()),
+          c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age})`) : ''),
         h('td', { class: 'nowrap', 'data-label': 'Imagens' },
           h('button', { type: 'button', class: `img-btn${c.photo_url ? ' has' : ''}`, 'data-tip': c.photo_url ? 'Trocar foto da criança' : 'Adicionar foto da criança', 'aria-label': c.photo_url ? 'Trocar foto da criança' : 'Adicionar foto da criança', onclick: () => pickOne(c, 'photo') }, '📷', h('span', {}, c.photo_url ? '✓' : '+')),
           h('button', { type: 'button', class: `img-btn${c.letter_photo_url ? ' has' : ''}`, 'data-tip': c.letter_photo_url ? 'Trocar cartinha' : 'Adicionar cartinha', 'aria-label': c.letter_photo_url ? 'Trocar cartinha' : 'Adicionar cartinha', onclick: () => pickOne(c, 'letter') }, '✉️', h('span', {}, c.letter_photo_url ? '✓' : '+')),
@@ -371,6 +398,7 @@ function renderUsers() {
   const approved = sponsors.filter((u) => u.approved);
   const withKids = sponsors.filter((u) => kidsOf(u).length);
   const idle = approved.filter((u) => !kidsOf(u).length);
+  const online = sponsors.filter((u) => u.online);
   document.querySelectorAll('[data-badge=pending]').forEach((b) => { b.textContent = pending.length; b.hidden = !pending.length; });
   notifyNewPending(pending);
   // A gestora não percebeu o contador pequeno: aviso grande enquanto houver gente esperando.
@@ -380,6 +408,7 @@ function renderUsers() {
 
   const stat = (icon, n, label, kind, filter) => h('button', { type: 'button', class: `stat stat-${kind} stat-btn${$('userFilter').value === filter ? ' active' : ''}`, 'data-tip': 'Filtrar a lista', onclick: () => { $('userFilter').value = filter; renderUsers(); } }, h('span', { class: 'stat-ico', 'aria-hidden': 'true' }, icon), h('div', {}, h('strong', {}, n), h('span', {}, label)));
   $('userStats').replaceChildren(
+    stat('🟢', online.length, 'online agora', 'online', 'online'),
     stat('👥', sponsors.length, 'já entraram no portal', 'total', 'all'),
     stat('⏳', pending.length, 'aguardando liberação', 'pending', 'pending'),
     stat('💛', withKids.length, 'já apadrinharam', 'taken', 'sponsored'),
@@ -392,6 +421,7 @@ function renderUsers() {
     const kids = kidsOf(u);
     if (f === 'admins') { if (!u.is_admin) return false; }
     else if (u.is_admin && f !== 'all') return false;
+    if (f === 'online' && !u.online) return false;
     if (f === 'pending' && u.approved) return false;
     if (f === 'sponsored' && !kids.length) return false;
     if (f === 'idle' && (!u.approved || kids.length)) return false;
@@ -403,7 +433,7 @@ function renderUsers() {
       const kids = kidsOf(u);
       const phone = kids.find((c) => c.sponsor_phone_digits);
       return h('tr', {},
-        h('td', { 'data-label': 'Nome', class: 'cell-title' }, u.google_name, u.is_admin ? [' ', h('span', { class: 'status-pill admin' }, 'Gestor')] : null),
+        h('td', { 'data-label': 'Nome', class: 'cell-title' }, u.online ? h('span', { class: 'online-dot', title: 'Online agora' }) : null, u.google_name, u.is_admin ? [' ', h('span', { class: 'status-pill admin' }, 'Gestor')] : null),
         h('td', { 'data-label': 'E-mail' }, u.email, phone ? [h('br'), h('a', { class: 'small', href: `https://wa.me/55${phone.sponsor_phone_digits}`, target: '_blank', rel: 'noopener' }, `📲 ${phone.sponsor_phone}`)] : null),
         h('td', { 'data-label': 'Acessos', class: 'small' }, `1º: ${formatDate(u.created_at)}`, h('br'), h('span', { class: 'muted' }, `Último: ${formatDate(u.last_login)}`)),
         h('td', { 'data-label': 'Situação' }, u.approved ? 'Liberado' : h('strong', { class: 'warn' }, 'Aguardando')),
@@ -496,7 +526,7 @@ async function uploadImage(c, kind, file) {
 }
 
 const EDIT_FIELDS = [
-  ['class_name', 'Turma'], ['name', 'Nome'], ['age', 'Idade'], ['gender', 'Menina ou menino'],
+  ['class_name', 'Turma'], ['name', 'Nome'], ['age', 'Idade'],
   ['gift_1', 'Pedido 1'], ['gift_2', 'Pedido 2'], ['gift_3', 'Pedido 3'],
   ['shirt_size', 'Camiseta'], ['pants_size', 'Calça'], ['shoe_size', 'Tênis'],
 ];
@@ -513,14 +543,11 @@ function openEdit(c) {
   $('editImages').hidden = !c;
   $('editNewHint').hidden = !!c;
   $('editFields').replaceChildren(...EDIT_FIELDS.map(([k, label]) => {
-    if (k === 'gender') {
-      const sel = h('select', { name: 'gender' }, h('option', { value: '' }, '—'), h('option', { value: 'F' }, '👧 Menina'), h('option', { value: 'M' }, '👦 Menino'));
-      sel.value = values.gender || '';
-      return h('label', { class: 'short wide2' }, label, sel);
-    }
     return h('label', { class: k.endsWith('size') || k === 'age' ? 'short' : '' }, label,
       h('input', { name: k, value: values[k] || '', maxlength: '120', required: k === 'class_name' || k === 'name' }));
   }));
+  // Sexo não aparece mais na tela, mas o valor salvo continua igual ao editar (não apaga dado).
+  $('editFields').append(h('input', { type: 'hidden', name: 'gender', value: values.gender || '' }));
   $('editPhoto').onclick = () => pickOne(c, 'photo');
   $('editLetter').onclick = () => pickOne(c, 'letter');
   $('editError').hidden = true;
@@ -674,7 +701,7 @@ async function loadDelivery() {
       h('p', {}, 'Até ', h('strong', {}, d.deadline), ', no ', h('strong', {}, d.place), ':', h('br'), d.address, '.'),
       h('p', {}, h('strong', {}, 'Antes de levar, combine a entrega'), ' com um dos responsáveis:'),
       h('div', { class: 'note-contacts' }, ...d.contacts.map((c) =>
-        h('a', { class: 'btn btn-small btn-whats', href: `https://wa.me/55${c.phone}?text=${encodeURIComponent(WHATS_HELLO)}`, target: '_blank', rel: 'noopener' }, `📲 ${c.name.split(' ')[0]}`, h('small', {}, fmtPhone(c.phone))))),
+        h('a', { class: 'contact-btn', href: `https://wa.me/55${c.phone}?text=${encodeURIComponent(WHATS_HELLO)}`, target: '_blank', rel: 'noopener', 'aria-label': `WhatsApp de ${c.name}` }, h('strong', {}, c.name.split(' ')[0]), h('span', {}, fmtPhone(c.phone)), h('span', { class: 'contact-go', 'aria-hidden': 'true' }, '→')))),
     );
     $('sponsoredDelivery').replaceChildren('📦 Entregue o presente ', h('strong', {}, `até ${d.deadline}`), ' no ', h('strong', {}, d.place), ` (${d.address}), combinando antes com a organização.`);
   } catch {
