@@ -611,3 +611,25 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
 .kid-chip small { font-weight: 400; opacity: .8; font-size: .72rem; }
 .status-pill.admin { background: #ede7ff; color: #5b3cc4; }
 @media (max-width: 720px) { #userStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ===== Orientação: boas-vindas, confirmação e aviso ao gestor ===== */
+.note-list { margin: 0; padding-left: 18px; }
+.note-list li { margin-bottom: 6px; }
+.guide-dialog { max-width: 480px; border-top: 6px solid var(--orange); }
+.guide-dialog h2 { margin-top: 0; }
+.guide-dialog .note-list { padding-left: 20px; line-height: 1.55; }
+.guide-tip { background: #fff4e6; border: 1.5px dashed rgba(232, 113, 26, .65); border-radius: 10px; padding: 10px 12px; }
+.guide-big { font-size: 2.6rem; text-align: center; line-height: 1; margin-bottom: 6px; }
+#sponsoredDialog { text-align: center; }
+#sponsoredDialog .actions { justify-content: center; flex-wrap: wrap; }
+.admin-alert {
+  display: block; width: 100%; margin: 0 0 14px; padding: 12px 16px; border: 0; border-radius: 12px; cursor: pointer;
+  background: #ffe8a3; color: #6b3b00; font: inherit; font-weight: 700; text-align: center;
+  box-shadow: 0 0 0 2px #f2b705 inset; animation: alert-pulse 2s ease-in-out infinite;
+}
+.admin-alert[hidden] { display: none; }
+.admin-alert:hover { background: #ffdf7a; }
+@keyframes alert-pulse { 50% { box-shadow: 0 0 0 4px #f2b705 inset; } }
+[data-view=mine].pulse { animation: tab-pulse 1.2s ease-in-out 6; }
+@keyframes tab-pulse { 50% { box-shadow: 0 0 0 4px rgba(232, 113, 26, .55); } }
+@media (prefers-reduced-motion: reduce) { .admin-alert, [data-view=mine].pulse { animation: none; } }

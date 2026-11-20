@@ -46,6 +46,7 @@
 
   <main id="app">
     <section class="center" id="loading"><p>Carregando…</p></section>
+    <button type="button" class="admin-alert" id="adminAlert" hidden></button>
 
     <section class="center" id="loginView" hidden>
       <img src="/logo.jpg" alt="Filhos do Ritmo — Na batida de vários corações" class="hero-logo">
@@ -85,7 +86,11 @@
           <article class="note note-yellow">
             <span class="pin" aria-hidden="true"></span>
             <h3>🎁 Sobre os presentes</h3>
-            <p>TEXTO_PENDENTE_PRESENTES</p>
+            <ul class="note-list" id="giftRules">
+              <li>Você pode apadrinhar <strong>uma ou mais crianças</strong> e escolher <strong>um ou mais presentes</strong> para cada uma.</li>
+              <li>Não precisa seguir o pedido à risca: se ele não couber no seu orçamento ou você não encontrar, pode dar <strong>outro presente adequado à idade</strong> da criança. Os tamanhos de roupa e calçado estão na cartinha.</li>
+              <li>Não precisa ser de marca: se a criança pediu um tênis de marca, um <strong>genérico</strong> serve.</li>
+            </ul>
           </article>
           <article class="note note-pink">
             <span class="pin" aria-hidden="true"></span>
@@ -269,6 +274,20 @@
         <button type="submit" class="btn">Salvar</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="welcomeDialog" class="guide-dialog" aria-labelledby="welcomeTitle">
+    <h2 id="welcomeTitle">🎄 Bem-vindo(a) ao Natal Solidário!</h2>
+    <div id="welcomeRules"></div>
+    <p class="guide-tip">💛 Depois de apadrinhar, a criança fica na aba <strong>Minhas</strong>, com o quadro de avisos de <strong>onde e até quando entregar</strong>.</p>
+    <div class="actions"><button type="button" class="btn" id="welcomeOk">Entendi, ver as cartinhas</button></div>
+  </dialog>
+
+  <dialog id="sponsoredDialog" class="guide-dialog" aria-labelledby="sponsoredTitle">
+    <div class="guide-big" aria-hidden="true">💛</div>
+    <h2 id="sponsoredTitle">Obrigado! <span id="sponsoredName"></span> agora é sua criança.</h2>
+    <p>Ela fica guardada na aba <strong>Minhas</strong>, com os pedidos, os tamanhos e o quadro de avisos de <strong>onde e até quando entregar</strong>.</p>
+    <div class="actions"><button type="button" class="btn btn-ghost" id="sponsoredMore">Escolher mais crianças</button><button type="button" class="btn" id="sponsoredGo">💛 Ver em Minhas</button></div>
   </dialog>
 
   <dialog id="photoDialog" class="photo-dialog">

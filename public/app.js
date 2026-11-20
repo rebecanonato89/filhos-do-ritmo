@@ -259,7 +259,9 @@ async function submitSponsor(ev) {
     await api(`/api/children/${c.id}/sponsor`, { method: 'POST', body });
     state.me.sponsor = body;
     $('sponsorDialog').close();
-    toast(`Obrigado! ${c.name} agora é sua criança 💛`);
+    $('sponsoredName').textContent = c.name;
+    $('sponsoredDialog').showModal();
+    document.querySelectorAll('[data-view=mine]').forEach((b) => b.classList.add('pulse'));
   } catch (err) {
     $('dlgError').textContent = err.message;
     $('dlgError').hidden = false;
@@ -370,6 +372,10 @@ function renderUsers() {
   const withKids = sponsors.filter((u) => kidsOf(u).length);
   const idle = approved.filter((u) => !kidsOf(u).length);
   document.querySelectorAll('[data-badge=pending]').forEach((b) => { b.textContent = pending.length; b.hidden = !pending.length; });
+  // A gestora não percebeu o contador pequeno: aviso grande enquanto houver gente esperando.
+  const onUsers = state.view === 'admin' && !$('panelUsers').hidden;
+  $('adminAlert').hidden = !pending.length || onUsers;
+  $('adminAlert').textContent = `🔔 ${pending.length} ${pending.length === 1 ? 'pessoa aguardando' : 'pessoas aguardando'} liberação · Ver e liberar →`;
 
   const stat = (icon, n, label, kind, filter) => h('button', { type: 'button', class: `stat stat-${kind} stat-btn${$('userFilter').value === filter ? ' active' : ''}`, 'data-tip': 'Filtrar a lista', onclick: () => { $('userFilter').value = filter; renderUsers(); } }, h('span', { class: 'stat-ico', 'aria-hidden': 'true' }, icon), h('div', {}, h('strong', {}, n), h('span', {}, label)));
   $('userStats').replaceChildren(
@@ -622,6 +628,26 @@ async function bulkUpload(files, kind) {
   await refresh();
 }
 
+// ---------- Orientação ----------
+
+// Uma vez por padrinho neste aparelho: quem entra rápido nem chega a abrir a aba Minhas.
+function showWelcomeOnce() {
+  if (state.me.is_admin) return;
+  const key = `fdr_welcome_v1:${state.me.email}`;
+  try { if (localStorage.getItem(key)) return; } catch { /* sem storage: mostra sempre */ }
+  $('welcomeRules').replaceChildren($('giftRules').cloneNode(true));
+  $('welcomeRules').firstChild.removeAttribute('id');
+  $('welcomeDialog').showModal();
+  try { localStorage.setItem(key, '1'); } catch { /* ignora */ }
+}
+
+function goToPendingUsers() {
+  setView('admin');
+  document.querySelector('.seg[data-panel=users]').click();
+  $('userFilter').value = 'pending';
+  renderUsers();
+}
+
 // ---------- Ciclo ----------
 
 function render() {
@@ -638,6 +664,7 @@ function setView(view) {
   state.view = view;
   document.querySelectorAll('.tab[data-view], .bottomnav [data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   window.scrollTo({ top: 0 });
+  if (view === 'mine') document.querySelectorAll('[data-view=mine]').forEach((b) => b.classList.remove('pulse'));
   render();
   refresh();
 }
@@ -678,6 +705,7 @@ async function boot() {
   document.querySelectorAll('[data-admin]').forEach((el) => (el.hidden = !state.me.is_admin));
   $('topNotice').hidden = false;
   await refresh();
+  showWelcomeOnce();
   state.timer = setInterval(() => document.visibilityState === 'visible' && !$('sponsorDialog').open && !$('editDialog').open && !$('uploadDialog').open && !$('imgDialog').open && refresh(), POLL_MS);
 }
 
@@ -696,6 +724,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let fitNamesTimer;
   window.addEventListener('resize', () => { clearTimeout(fitNamesTimer); fitNamesTimer = setTimeout(fitAllNames, 150); });
   $('sponsorForm').addEventListener('submit', submitSponsor);
+  $('welcomeOk').addEventListener('click', () => $('welcomeDialog').close());
+  $('sponsoredMore').addEventListener('click', () => $('sponsoredDialog').close());
+  $('sponsoredGo').addEventListener('click', () => { $('sponsoredDialog').close(); setView('mine'); });
+  $('adminAlert').addEventListener('click', goToPendingUsers);
   $('dlgCancel').addEventListener('click', () => $('sponsorDialog').close());
   $('photoClose').addEventListener('click', () => $('photoDialog').close());
   $('editForm').addEventListener('submit', submitEdit);
@@ -709,6 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.seg[data-panel]').forEach((x) => x.classList.toggle('active', x === b));
     $('panelKids').hidden = b.dataset.panel !== 'kids';
     $('panelUsers').hidden = b.dataset.panel !== 'users';
+    if (state.users) renderUsers(); // atualiza o aviso de pendentes
   }));
   $('editCancel').addEventListener('click', () => $('editDialog').close());
   $('csvInput').addEventListener('change', (e) => e.target.files[0] && importCsv(e.target.files[0]).finally(() => (e.target.value = '')));
