@@ -157,7 +157,7 @@ function card(c) {
       h('span', { class: 'lc-label' }, 'Meu nome é:'),
       field(c.name, 'lc-name'),
       h('span', { class: 'lc-label' }, 'Eu tenho ', field(c.age, 'lc-age'), ' anos.',
-        c.gender ? h('span', { class: `gender-tag g-${c.gender}`, title: c.gender === 'F' ? 'Menina' : 'Menino', 'aria-label': c.gender === 'F' ? 'Menina' : 'Menino' }, c.gender === 'F' ? '👧' : '👦') : null),
+      ),
     ),
     h('p', { class: 'lc-q' }, 'Neste Natal, eu gostaria de ganhar:'),
     // Sempre 3 linhas de pedido e o bloco de tamanhos: todas as cartinhas com a mesma altura.
@@ -336,7 +336,7 @@ function renderAdmin() {
         h('td', { 'data-label': 'Turma' }, h('span', { class: 'class-pill', vars: classColor(c.class_name) }, c.class_name)),
         h('td', { 'data-label': 'Criança', class: 'cell-title' },
           h('button', { type: 'button', class: 'pencil pencil-sm', onclick: () => openEdit(c), 'data-tip': 'Editar cartinha', 'aria-label': `Editar ${c.name}` }, pencilIcon()),
-          c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age}${c.gender ? `, ${c.gender === 'F' ? 'menina' : 'menino'}` : ''})`) : ''),
+          c.name, c.age ? h('span', { class: 'muted small' }, ` (${c.age})`) : ''),
         h('td', { class: 'nowrap', 'data-label': 'Imagens' },
           h('button', { type: 'button', class: `img-btn${c.photo_url ? ' has' : ''}`, 'data-tip': c.photo_url ? 'Trocar foto da criança' : 'Adicionar foto da criança', 'aria-label': c.photo_url ? 'Trocar foto da criança' : 'Adicionar foto da criança', onclick: () => pickOne(c, 'photo') }, '📷', h('span', {}, c.photo_url ? '✓' : '+')),
           h('button', { type: 'button', class: `img-btn${c.letter_photo_url ? ' has' : ''}`, 'data-tip': c.letter_photo_url ? 'Trocar cartinha' : 'Adicionar cartinha', 'aria-label': c.letter_photo_url ? 'Trocar cartinha' : 'Adicionar cartinha', onclick: () => pickOne(c, 'letter') }, '✉️', h('span', {}, c.letter_photo_url ? '✓' : '+')),
@@ -524,7 +524,7 @@ async function uploadImage(c, kind, file) {
 }
 
 const EDIT_FIELDS = [
-  ['class_name', 'Turma'], ['name', 'Nome'], ['age', 'Idade'], ['gender', 'Menina ou menino'],
+  ['class_name', 'Turma'], ['name', 'Nome'], ['age', 'Idade'],
   ['gift_1', 'Pedido 1'], ['gift_2', 'Pedido 2'], ['gift_3', 'Pedido 3'],
   ['shirt_size', 'Camiseta'], ['pants_size', 'Calça'], ['shoe_size', 'Tênis'],
 ];
@@ -541,14 +541,11 @@ function openEdit(c) {
   $('editImages').hidden = !c;
   $('editNewHint').hidden = !!c;
   $('editFields').replaceChildren(...EDIT_FIELDS.map(([k, label]) => {
-    if (k === 'gender') {
-      const sel = h('select', { name: 'gender' }, h('option', { value: '' }, '—'), h('option', { value: 'F' }, '👧 Menina'), h('option', { value: 'M' }, '👦 Menino'));
-      sel.value = values.gender || '';
-      return h('label', { class: 'short wide2' }, label, sel);
-    }
     return h('label', { class: k.endsWith('size') || k === 'age' ? 'short' : '' }, label,
       h('input', { name: k, value: values[k] || '', maxlength: '120', required: k === 'class_name' || k === 'name' }));
   }));
+  // Sexo não aparece mais na tela, mas o valor salvo continua igual ao editar (não apaga dado).
+  $('editFields').append(h('input', { type: 'hidden', name: 'gender', value: values.gender || '' }));
   $('editPhoto').onclick = () => pickOne(c, 'photo');
   $('editLetter').onclick = () => pickOne(c, 'letter');
   $('editError').hidden = true;
