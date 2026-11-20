@@ -11,6 +11,7 @@ const PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
 
 const STATIC = {
   '/': ['index.html', 'text/html; charset=utf-8'],
+  '/privacidade': ['privacidade.html', 'text/html; charset=utf-8'],
   '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
   '/styles.css': ['styles.css', 'text/css; charset=utf-8'],
   '/logo.jpg': ['logo.jpg', 'image/jpeg'],
@@ -184,7 +185,7 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
     if (method === 'GET' && STATIC[path]) {
       const [file, type] = STATIC[path];
       let body = await readFile(join(PUBLIC_DIR, file));
-      if (path === '/') {
+      if (type.startsWith('text/html')) {
         // Versão no endereço do CSS/JS: após cada deploy o navegador busca os arquivos novos
         // em vez de misturar HTML novo com CSS/JS antigos do cache.
         const v = await assetVersion();
