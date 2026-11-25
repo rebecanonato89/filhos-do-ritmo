@@ -1,6 +1,7 @@
-// Gera um .xlsx simples (uma aba) sem dependências: XML do Office Open + zip montado à mão.
-// Suporta título, cabeçalho destacado com filtro, larguras de coluna, cabeçalho congelado
-// e um estilo por célula. Tudo é texto (telefones e tamanhos não viram número).
+// Gera um .xlsx (uma ou mais abas) sem dependências: XML do Office Open + zip montado à mão.
+// Cada aba tem título, subtítulo, cabeçalho destacado (com filtro, opcional), larguras de
+// coluna, cabeçalho congelado e um estilo por célula. Números viram célula numérica; o resto
+// é texto (telefones e tamanhos não viram número).
 import { deflateRawSync, crc32 } from 'node:zlib';
 
 const esc = (v) => String(v ?? '')
@@ -9,66 +10,87 @@ const esc = (v) => String(v ?? '')
 
 const colName = (i) => { let s = ''; for (i += 1; i > 0; i = Math.floor((i - 1) / 26)) s = String.fromCharCode(65 + ((i - 1) % 26)) + s; return s; };
 
-// Índices de estilo (cellXfs em STYLES)
-export const S = { normal: 1, title: 2, header: 3, subtitle: 4, free: 5, taken: 6, done: 7 };
+// Índices de estilo (posição em cellXfs)
+export const S = { normal: 1, title: 2, header: 3, subtitle: 4, free: 5, taken: 6, done: 7, num: 8, total: 9, totalNum: 10 };
+
+const MID = '<alignment vertical="center"/>';
+const CEN = '<alignment horizontal="center" vertical="center"/>';
+const XFS = [
+  '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>',
+  `<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1">${MID}</xf>`,
+  '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>',
+  `<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1">${MID}</xf>`,
+  '<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>',
+  `<xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1">${MID}</xf>`,
+  `<xf numFmtId="0" fontId="0" fillId="4" borderId="1" xfId="0" applyFill="1" applyBorder="1">${MID}</xf>`,
+  `<xf numFmtId="0" fontId="0" fillId="5" borderId="1" xfId="0" applyFill="1" applyBorder="1">${MID}</xf>`,
+  `<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1">${CEN}</xf>`,
+  `<xf numFmtId="0" fontId="4" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1">${MID}</xf>`,
+  `<xf numFmtId="0" fontId="4" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">${CEN}</xf>`,
+];
 
 const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-<fonts count="4"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><color rgb="FFC45A0C"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><i/><sz val="10"/><color rgb="FF666666"/><name val="Calibri"/></font></fonts>
+<fonts count="5"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><color rgb="FFC45A0C"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><i/><sz val="10"/><color rgb="FF666666"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>
 <fills count="6"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8711A"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8EFFF"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF1E5"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFEAF6EE"/></patternFill></fill></fills>
 <borders count="2"><border/><border><left style="thin"><color rgb="FFDDDDDD"/></left><right style="thin"><color rgb="FFDDDDDD"/></right><top style="thin"><color rgb="FFDDDDDD"/></top><bottom style="thin"><color rgb="FFDDDDDD"/></bottom></border></borders>
 <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-<cellXfs count="8">
-<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
-<xf borderId="1" applyBorder="1" numFmtId="0" fontId="0" fillId="0" xfId="0"><alignment vertical="center"/></xf>
-<xf fontId="1" applyFont="1" numFmtId="0" fillId="0" borderId="0" xfId="0"/>
-<xf fontId="2" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1" numFmtId="0" xfId="0"><alignment vertical="center"/></xf>
-<xf fontId="3" applyFont="1" numFmtId="0" fillId="0" borderId="0" xfId="0"/>
-<xf fillId="3" borderId="1" applyFill="1" applyBorder="1" numFmtId="0" fontId="0" xfId="0"><alignment vertical="center"/></xf>
-<xf fillId="4" borderId="1" applyFill="1" applyBorder="1" numFmtId="0" fontId="0" xfId="0"><alignment vertical="center"/></xf>
-<xf fillId="5" borderId="1" applyFill="1" applyBorder="1" numFmtId="0" fontId="0" xfId="0"><alignment vertical="center"/></xf>
+<cellXfs count="${XFS.length}">
+${XFS.join('\n')}
 </cellXfs>
 <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
 </styleSheet>`;
 
-/**
- * @param {{ sheetName: string, title: string, subtitle: string, columns: {name: string, width: number}[],
- *           rows: {cells: string[], styles?: number[]}[] }} spec
- */
-export function buildXlsx({ sheetName, title, subtitle, columns, rows }) {
+const HEADER_ROW = 3;
+
+function sheetXml({ title, subtitle, columns, rows, filter = true }) {
   const last = colName(columns.length - 1);
-  const headerRow = 3;
-  const cell = (r, c, v, s) => `<c r="${colName(c)}${r}" t="inlineStr" s="${s}"><is><t xml:space="preserve">${esc(v)}</t></is></c>`;
+  const cell = (r, c, v, s) => (typeof v === 'number'
+    ? `<c r="${colName(c)}${r}" s="${s}"><v>${v}</v></c>`
+    : `<c r="${colName(c)}${r}" t="inlineStr" s="${s}"><is><t xml:space="preserve">${esc(v)}</t></is></c>`);
   const xmlRows = [
     `<row r="1" ht="22" customHeight="1">${cell(1, 0, title, S.title)}</row>`,
     `<row r="2">${cell(2, 0, subtitle, S.subtitle)}</row>`,
-    `<row r="${headerRow}" ht="20" customHeight="1">${columns.map((col, i) => cell(headerRow, i, col.name, S.header)).join('')}</row>`,
+    `<row r="${HEADER_ROW}" ht="20" customHeight="1">${columns.map((col, i) => cell(HEADER_ROW, i, col.name, S.header)).join('')}</row>`,
     ...rows.map((row, k) => {
-      const r = headerRow + 1 + k;
-      return `<row r="${r}">${row.cells.map((v, i) => cell(r, i, v, row.styles?.[i] ?? S.normal)).join('')}</row>`;
+      const r = HEADER_ROW + 1 + k;
+      return `<row r="${r}">${row.cells.map((v, i) => cell(r, i, v, row.styles?.[i] ?? (typeof v === 'number' ? S.num : S.normal))).join('')}</row>`;
     }),
   ];
-  const lastRow = headerRow + Math.max(rows.length, 1);
-  const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  const lastRow = HEADER_ROW + Math.max(rows.length, 1);
+  return {
+    filterRef: filter ? `$A$${HEADER_ROW}:$${last}$${lastRow}` : null,
+    xml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-<sheetViews><sheetView workbookViewId="0"><pane ySplit="${headerRow}" topLeftCell="A${headerRow + 1}" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
+<sheetViews><sheetView workbookViewId="0"><pane ySplit="${HEADER_ROW}" topLeftCell="A${HEADER_ROW + 1}" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
 <cols>${columns.map((col, i) => `<col min="${i + 1}" max="${i + 1}" width="${col.width}" customWidth="1"/>`).join('')}</cols>
 <sheetData>${xmlRows.join('')}</sheetData>
-<autoFilter ref="A${headerRow}:${last}${lastRow}"/>
-<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/>
-</worksheet>`;
+${filter ? `<autoFilter ref="A${HEADER_ROW}:${last}${lastRow}"/>` : ''}
+<pageSetup orientation="landscape"/>
+</worksheet>`,
+  };
+}
+
+/**
+ * Uma aba por item, na ordem dada.
+ * @param {{ name: string, title: string, subtitle: string, columns: {name: string, width: number}[],
+ *           rows: {cells: (string|number)[], styles?: number[]}[], filter?: boolean }[]} sheets
+ */
+export function buildXlsx(sheets) {
+  const built = sheets.map(sheetXml);
+  const names = sheets.map((sh) => esc(sh.name).slice(0, 31));
   const files = {
     '[Content_Types].xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`,
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${built.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`,
     '_rels/.rels': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
     'xl/workbook.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${esc(sheetName).slice(0, 31)}" sheetId="1" r:id="rId1"/></sheets><definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'${esc(sheetName).slice(0, 31)}'!$A$${headerRow}:$${last}$${lastRow}</definedName></definedNames></workbook>`,
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${names.map((n, i) => `<sheet name="${n}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets><definedNames>${built.map((b, i) => (b.filterRef ? `<definedName name="_xlnm._FilterDatabase" localSheetId="${i}" hidden="1">'${names[i]}'!${b.filterRef}</definedName>` : '')).join('')}</definedNames></workbook>`,
     'xl/_rels/workbook.xml.rels': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
-    'xl/worksheets/sheet1.xml': sheet,
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${built.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}<Relationship Id="rId${built.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
     'xl/styles.xml': STYLES,
   };
+  built.forEach((b, i) => { files[`xl/worksheets/sheet${i + 1}.xml`] = b.xml; });
   return zip(files);
 }
 

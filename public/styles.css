@@ -748,3 +748,11 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
   .print-report tr.pr-done td { background: #eef8f1; }
   .pr-nowrap { white-space: nowrap; }
 }
+@media print {
+  .print-report table.pr-summary { width: auto; margin: 0 0 12px; break-inside: avoid; }
+  .pr-summary th { font-size: 8pt; }
+  .pr-summary td { padding: 3px 10px; }
+  .pr-num { text-align: center; }
+  .pr-total td { font-weight: 700; background: #fff1e5; border-top: 2px solid #e8711a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .pr-check { text-align: center; font-size: 13pt; line-height: 1; }
+}

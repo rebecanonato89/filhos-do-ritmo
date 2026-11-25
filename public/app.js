@@ -314,6 +314,22 @@ function adminFiltered() {
   });
 }
 
+// Resumo geral (todas as crianças, independente do filtro) por turma, para bater o olho.
+function summaryTable() {
+  const by = new Map();
+  for (const c of state.children) {
+    const t = by.get(c.class_name) || { total: 0, taken: 0, done: 0 };
+    t.total += 1; if (c.status === 'sponsored') t.taken += 1; if (c.delivered) t.done += 1;
+    by.set(c.class_name, t);
+  }
+  const sum = [...by.values()].reduce((a, t) => ({ total: a.total + t.total, taken: a.taken + t.taken, done: a.done + t.done }), { total: 0, taken: 0, done: 0 });
+  const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—');
+  const line = (label, t, cls) => h('tr', { class: cls }, h('td', {}, label), ...[t.total, t.taken, t.total - t.taken, t.done, t.taken - t.done, pct(t.taken, t.total)].map((v) => h('td', { class: 'pr-num' }, String(v))));
+  return h('table', { class: 'pr-summary' },
+    h('thead', {}, h('tr', {}, ...['Resumo geral · Turma', 'Crianças', 'Apadrinhadas', 'Disponíveis', 'Entregues', 'Falta entregar', '% apadrinhadas'].map((t) => h('th', {}, t)))),
+    h('tbody', {}, ...[...by].map(([cls, t]) => line(cls, t, '')), line('TOTAL', sum, 'pr-total')));
+}
+
 // PDF: relatório próprio para impressão; o navegador salva como PDF ("Salvar como PDF").
 async function exportPdf() {
   await refresh(); // dados do momento, não os da última atualização automática
@@ -328,8 +344,9 @@ async function exportPdf() {
     h('header', { class: 'pr-head' },
       h('div', {}, h('h1', {}, 'Filhos do Ritmo · Natal Solidário'), h('p', {}, `Apadrinhamentos — ${filtro}`)),
       h('p', { class: 'pr-meta' }, `Gerado em ${now}`, h('br'), `${rows.length} crianças · ${taken.length} apadrinhadas · ${taken.filter((c) => c.delivered).length} entregues`)),
+    summaryTable(),
     h('table', {},
-      h('thead', {}, h('tr', {}, ...['Turma', 'Criança', 'Pedidos', 'Tamanhos', 'Situação', 'Padrinho', 'Telefone', 'E-mail'].map((t) => h('th', {}, t)))),
+      h('thead', {}, h('tr', {}, ...['Turma', 'Criança', 'Pedidos', 'Tamanhos', 'Situação', 'Padrinho', 'Telefone', 'E-mail', 'Entregue'].map((t) => h('th', {}, t)))),
       h('tbody', {}, ...rows.map((c) => h('tr', { class: `pr-${c.status}${c.delivered ? ' pr-done' : ''}` },
         h('td', { class: 'pr-nowrap' }, c.class_name),
         h('td', {}, h('strong', {}, c.name), c.age ? ` (${c.age})` : ''),
@@ -339,6 +356,8 @@ async function exportPdf() {
         h('td', {}, c.sponsor_name || ''),
         h('td', { class: 'pr-nowrap' }, c.sponsor_phone || ''),
         h('td', {}, c.sponsor_email || ''),
+        // ☐ para marcar à mão no dia da entrega; ☑ quando já registrado no portal
+        h('td', { class: 'pr-check' }, c.status === 'sponsored' ? (c.delivered ? '☑' : '☐') : ''),
       ))),
     ),
   );

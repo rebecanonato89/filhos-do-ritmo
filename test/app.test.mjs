@@ -335,4 +335,5 @@ test('exportação em Excel (.xlsx) só para gestor, gerada na hora', async () =
   assert.match(res.headers.get('content-disposition'), /apadrinhamentos_\d{4}-\d{2}-\d{2}_\d{2}h\d{2}\.xlsx/);
   const buf = Buffer.from(await res.arrayBuffer());
   assert.equal(buf.readUInt32LE(0), 0x04034b50, 'arquivo zip');
+  assert.ok(buf.includes('xl/worksheets/sheet2.xml'), 'duas abas: Resumo e Apadrinhamentos');
 });

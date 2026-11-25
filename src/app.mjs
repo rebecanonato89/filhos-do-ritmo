@@ -418,7 +418,7 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
       const columns = [
         ['Turma', 16], ['Criança', 32], ['Idade', 7], ['Pedido 1', 28], ['Pedido 2', 28], ['Pedido 3', 28],
         ['Camiseta', 10], ['Calça', 8], ['Tênis', 8], ['Situação', 13], ['Padrinho', 30], ['Telefone', 17],
-        ['E-mail', 34], ['Apadrinhado em', 17],
+        ['E-mail', 34], ['Apadrinhado em', 17], ['Entregue', 10],
       ].map(([name, width]) => ({ name, width }));
       const rows = kids.map((c) => {
         const status = !c.sponsor_email ? 'Disponível' : c.delivered ? 'Entregue' : 'Apadrinhada';
@@ -426,16 +426,38 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
         return {
           cells: [c.class_name, c.name, c.age, c.gift_1, c.gift_2, c.gift_3, c.shirt_size, c.pants_size, c.shoe_size, status,
             c.sponsor_name, formatPhone(c.sponsor_phone), c.sponsor_email,
-            c.sponsored_at ? new Date(c.sponsored_at).toLocaleString('pt-BR', { ...tz, dateStyle: 'short', timeStyle: 'short' }) : ''],
-          styles: Object.assign([], { 9: st }),
+            c.sponsored_at ? new Date(c.sponsored_at).toLocaleString('pt-BR', { ...tz, dateStyle: 'short', timeStyle: 'short' }) : '',
+            // ☐ para marcar à mão na lista impressa; ☑ quando a entrega já foi registrada no portal
+            c.sponsor_email ? (c.delivered ? '☑' : '☐') : ''],
+          styles: Object.assign([], { 9: st, 14: XS.num }),
         };
       });
-      const file = buildXlsx({
-        sheetName: 'Apadrinhamentos',
-        title: 'Filhos do Ritmo · Natal Solidário — Apadrinhamentos',
-        subtitle: `Gerado em ${stamp} · ${kids.length} crianças · ${taken.length} apadrinhadas · ${taken.filter((c) => c.delivered).length} entregues · ${kids.length - taken.length} disponíveis`,
-        columns, rows,
+      const delivered = taken.filter((c) => c.delivered).length;
+      // Resumo por turma para "bater o olho": total, apadrinhadas, disponíveis, entregues.
+      const byClass = new Map();
+      for (const c of kids) {
+        const t = byClass.get(c.class_name) || { total: 0, taken: 0, done: 0 };
+        t.total += 1; if (c.sponsor_email) t.taken += 1; if (c.delivered) t.done += 1;
+        byClass.set(c.class_name, t);
+      }
+      const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—');
+      const summaryRows = [...byClass].map(([cls, t]) => ({
+        cells: [cls, t.total, t.taken, t.total - t.taken, t.done, t.taken - t.done, pct(t.taken, t.total)],
+        styles: [XS.normal, XS.num, XS.num, XS.num, XS.num, XS.num, XS.num],
+      }));
+      summaryRows.push({
+        cells: ['TOTAL', kids.length, taken.length, kids.length - taken.length, delivered, taken.length - delivered, pct(taken.length, kids.length)],
+        styles: [XS.total, XS.totalNum, XS.totalNum, XS.totalNum, XS.totalNum, XS.totalNum, XS.totalNum],
       });
+      const subtitle = `Gerado em ${stamp} · ${kids.length} crianças · ${taken.length} apadrinhadas · ${delivered} entregues · ${kids.length - taken.length} disponíveis`;
+      const file = buildXlsx([
+        {
+          name: 'Resumo', title: 'Filhos do Ritmo · Natal Solidário — Resumo', subtitle, filter: false,
+          columns: [['Turma', 24], ['Crianças', 11], ['Apadrinhadas', 14], ['Disponíveis', 13], ['Entregues', 12], ['Falta entregar', 15], ['% apadrinhadas', 16]].map(([name, width]) => ({ name, width })),
+          rows: summaryRows,
+        },
+        { name: 'Apadrinhamentos', title: 'Filhos do Ritmo · Natal Solidário — Apadrinhamentos', subtitle, columns, rows },
+      ]);
       return send(res, 200, file, {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': `attachment; filename="filhos-do-ritmo-apadrinhamentos_${fileStamp}.xlsx"`,
