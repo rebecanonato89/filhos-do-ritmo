@@ -299,6 +299,55 @@ async function submitSponsor(ev) {
 
 // ---------- Gestor ----------
 
+// Mesmo filtro da tabela do Painel (usado também no PDF).
+function adminFiltered() {
+  const f = $('adminFilter').value;
+  const cls = $('adminClass').value;
+  const q = $('adminSearch').value.trim().toLowerCase();
+  return state.children.filter((c) => {
+    if (cls && c.class_name !== cls) return false;
+    if (f === 'available' && c.status !== 'available') return false;
+    if (f === 'sponsored' && c.status !== 'sponsored') return false;
+    if (f === 'pending' && !(c.status === 'sponsored' && !c.delivered)) return false;
+    if (f === 'delivered' && !c.delivered) return false;
+    return !q || `${c.name} ${c.sponsor_name || ''} ${c.sponsor_email || ''}`.toLowerCase().includes(q);
+  });
+}
+
+// PDF: relatório próprio para impressão; o navegador salva como PDF ("Salvar como PDF").
+async function exportPdf() {
+  await refresh(); // dados do momento, não os da última atualização automática
+  const rows = adminFiltered();
+  const sel = (id) => $(id).options[$(id).selectedIndex].text;
+  const q = $('adminSearch').value.trim();
+  const filtro = [sel('adminFilter'), sel('adminClass'), q ? `busca "${q}"` : ''].filter(Boolean).join(' · ');
+  const taken = rows.filter((c) => c.status === 'sponsored');
+  const now = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  const status = (c) => (c.status !== 'sponsored' ? 'Disponível' : c.delivered ? 'Entregue' : 'Apadrinhada');
+  $('printReport').replaceChildren(
+    h('header', { class: 'pr-head' },
+      h('div', {}, h('h1', {}, 'Filhos do Ritmo · Natal Solidário'), h('p', {}, `Apadrinhamentos — ${filtro}`)),
+      h('p', { class: 'pr-meta' }, `Gerado em ${now}`, h('br'), `${rows.length} crianças · ${taken.length} apadrinhadas · ${taken.filter((c) => c.delivered).length} entregues`)),
+    h('table', {},
+      h('thead', {}, h('tr', {}, ...['Turma', 'Criança', 'Pedidos', 'Tamanhos', 'Situação', 'Padrinho', 'Telefone', 'E-mail'].map((t) => h('th', {}, t)))),
+      h('tbody', {}, ...rows.map((c) => h('tr', { class: `pr-${c.status}${c.delivered ? ' pr-done' : ''}` },
+        h('td', { class: 'pr-nowrap' }, c.class_name),
+        h('td', {}, h('strong', {}, c.name), c.age ? ` (${c.age})` : ''),
+        h('td', {}, c.gifts.join(' · ')),
+        h('td', { class: 'pr-nowrap' }, [c.sizes.shirt && `Cam ${c.sizes.shirt}`, c.sizes.pants && `Calça ${c.sizes.pants}`, c.sizes.shoe && `Tênis ${c.sizes.shoe}`].filter(Boolean).join(' · ')),
+        h('td', { class: 'pr-nowrap' }, status(c)),
+        h('td', {}, c.sponsor_name || ''),
+        h('td', { class: 'pr-nowrap' }, c.sponsor_phone || ''),
+        h('td', {}, c.sponsor_email || ''),
+      ))),
+    ),
+  );
+  const prevTitle = document.title;
+  document.title = `filhos-do-ritmo-apadrinhamentos_${new Date().toISOString().slice(0, 10)}`; // nome sugerido do PDF
+  window.print();
+  document.title = prevTitle;
+}
+
 function renderAdmin() {
   const all = state.children;
   $('kidsCount').textContent = all.length;
@@ -321,16 +370,7 @@ function renderAdmin() {
     classSel.value = cur;
   }
 
-  const f = $('adminFilter').value;
-  const q = $('adminSearch').value.trim().toLowerCase();
-  const rows = all.filter((c) => {
-    if (classSel.value && c.class_name !== classSel.value) return false;
-    if (f === 'available' && c.status !== 'available') return false;
-    if (f === 'sponsored' && c.status !== 'sponsored') return false;
-    if (f === 'pending' && !(c.status === 'sponsored' && !c.delivered)) return false;
-    if (f === 'delivered' && !c.delivered) return false;
-    return !q || `${c.name} ${c.sponsor_name || ''} ${c.sponsor_email || ''}`.toLowerCase().includes(q);
-  });
+  const rows = adminFiltered();
 
   $('adminRows').replaceChildren(
     ...rows.map((c) =>
@@ -844,6 +884,7 @@ document.addEventListener('DOMContentLoaded', () => {
   for (const id of ['onlyAvailable', 'ageFilter']) $(id).addEventListener('change', renderSponsor);
   for (const id of ['adminFilter', 'adminClass']) $(id).addEventListener('change', renderAdmin);
   $('adminSearch').addEventListener('input', renderAdmin);
+  $('pdfBtn').addEventListener('click', exportPdf);
   $('userFilter').addEventListener('change', renderUsers);
   $('userSearch').addEventListener('input', renderUsers);
   $('recheckBtn').addEventListener('click', () => location.reload());

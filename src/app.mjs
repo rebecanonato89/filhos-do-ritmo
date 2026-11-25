@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import * as db_ from './db.mjs';
 import * as auth from './auth.mjs';
 import { DELIVERY } from './delivery.mjs';
+import { buildXlsx, S as XS } from './xlsx.mjs';
 
 const PUBLIC_DIR = fileURLToPath(new URL('../public/', import.meta.url));
 
@@ -403,6 +404,43 @@ export function createApp({ db, config, exchangeCode = auth.exchangeGoogleCode }
       if (!db_.deleteUser(db, email)) throw new HttpError(404, 'Usuário não encontrado');
       console.log(`delete user email=${email} by=${admin.email}`);
       return json(res, 200, { ok: true });
+    }
+
+    if (method === 'GET' && path === '/api/admin/export.xlsx') {
+      requireAdmin(req);
+      // Gerada na hora a partir do banco: sempre reflete o estado atual (e nunca vai para cache).
+      const tz = { timeZone: 'America/Sao_Paulo' };
+      const now = new Date();
+      const stamp = now.toLocaleString('pt-BR', { ...tz, dateStyle: 'short', timeStyle: 'short' });
+      const fileStamp = now.toLocaleString('sv-SE', tz).slice(0, 16).replace(' ', '_').replace(':', 'h');
+      const kids = db_.listChildren(db);
+      const taken = kids.filter((c) => c.sponsor_email);
+      const columns = [
+        ['Turma', 16], ['Criança', 32], ['Idade', 7], ['Pedido 1', 28], ['Pedido 2', 28], ['Pedido 3', 28],
+        ['Camiseta', 10], ['Calça', 8], ['Tênis', 8], ['Situação', 13], ['Padrinho', 30], ['Telefone', 17],
+        ['E-mail', 34], ['Apadrinhado em', 17],
+      ].map(([name, width]) => ({ name, width }));
+      const rows = kids.map((c) => {
+        const status = !c.sponsor_email ? 'Disponível' : c.delivered ? 'Entregue' : 'Apadrinhada';
+        const st = !c.sponsor_email ? XS.free : c.delivered ? XS.done : XS.taken;
+        return {
+          cells: [c.class_name, c.name, c.age, c.gift_1, c.gift_2, c.gift_3, c.shirt_size, c.pants_size, c.shoe_size, status,
+            c.sponsor_name, formatPhone(c.sponsor_phone), c.sponsor_email,
+            c.sponsored_at ? new Date(c.sponsored_at).toLocaleString('pt-BR', { ...tz, dateStyle: 'short', timeStyle: 'short' }) : ''],
+          styles: Object.assign([], { 9: st }),
+        };
+      });
+      const file = buildXlsx({
+        sheetName: 'Apadrinhamentos',
+        title: 'Filhos do Ritmo · Natal Solidário — Apadrinhamentos',
+        subtitle: `Gerado em ${stamp} · ${kids.length} crianças · ${taken.length} apadrinhadas · ${taken.filter((c) => c.delivered).length} entregues · ${kids.length - taken.length} disponíveis`,
+        columns, rows,
+      });
+      return send(res, 200, file, {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename="filhos-do-ritmo-apadrinhamentos_${fileStamp}.xlsx"`,
+        'Cache-Control': 'no-store',
+      });
     }
 
     if (method === 'GET' && path === '/api/admin/export.csv') {
