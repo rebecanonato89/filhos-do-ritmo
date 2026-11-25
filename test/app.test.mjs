@@ -325,3 +325,14 @@ test('"online agora" marca quem consultou o portal no último minuto', async () 
   assert.equal(users.find((u) => u.email === 'alice@gmail.com').online, true);
   assert.ok(users.every((u) => typeof u.online === 'boolean'));
 });
+
+test('exportação em Excel (.xlsx) só para gestor, gerada na hora', async () => {
+  assert.equal((await get('/api/admin/export.xlsx', alice)).status, 403);
+  const res = await get('/api/admin/export.xlsx', admin);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type'), /spreadsheetml/);
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  assert.match(res.headers.get('content-disposition'), /apadrinhamentos_\d{4}-\d{2}-\d{2}_\d{2}h\d{2}\.xlsx/);
+  const buf = Buffer.from(await res.arrayBuffer());
+  assert.equal(buf.readUInt32LE(0), 0x04034b50, 'arquivo zip');
+});

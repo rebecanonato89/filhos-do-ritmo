@@ -156,7 +156,8 @@
         <select id="adminClass"><option value="">Todas as turmas</option></select>
         <input type="search" id="adminSearch" placeholder="Buscar criança ou padrinho">
         <button type="button" class="btn btn-small" id="newChildBtn">➕ Nova criança</button>
-        <a class="btn btn-small btn-ghost" href="/api/admin/export.csv">Exportar planilha</a>
+        <a class="btn btn-small btn-ghost" href="/api/admin/export.xlsx" data-tip="Planilha completa e atualizada (Excel)">📊 Excel</a>
+        <button type="button" class="btn btn-small btn-ghost" id="pdfBtn" data-tip="PDF da lista com os filtros atuais">📄 PDF</button>
       </div>
       <div class="table-wrap">
         <table class="table">
@@ -319,5 +320,6 @@
   </dialog>
 
   <div class="toast" id="toast" hidden></div>
+  <section id="printReport" class="print-report" aria-hidden="true"></section>
 </body>
 </html>

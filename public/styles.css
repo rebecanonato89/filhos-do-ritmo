@@ -727,3 +727,24 @@ dialog .actions { position: sticky; bottom: -20px; z-index: 2; background: #fff;
 .notice-board .note { transform: none; } /* notas retas: leitura mais fácil com botões dentro */
 .notice-board .note-yellow { transform: rotate(-.6deg); }
 .lc-head .lc-class { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; max-width: 55%; }
+
+/* ===== Relatório em PDF (impressão) ===== */
+.print-report { display: none; }
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  body { background: #fff !important; }
+  body > *:not(.print-report) { display: none !important; }
+  .print-report { display: block; color: #111; font-size: 9.5pt; }
+  .pr-head { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #e8711a; padding-bottom: 6px; margin-bottom: 8px; }
+  .pr-head h1 { margin: 0; font-size: 15pt; color: #c45a0c; }
+  .pr-head p { margin: 2px 0 0; }
+  .pr-meta { text-align: right; color: #555; font-size: 8.5pt; }
+  .print-report table { width: 100%; border-collapse: collapse; }
+  .print-report thead { display: table-header-group; } /* cabeçalho repete em cada página */
+  .print-report th { background: #e8711a !important; color: #fff !important; text-align: left; padding: 5px 6px; font-size: 8.5pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-report td { border-bottom: 1px solid #ddd; padding: 4px 6px; vertical-align: top; }
+  .print-report tr { break-inside: avoid; }
+  .print-report tr.pr-sponsored td { background: #fff7ef; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-report tr.pr-done td { background: #eef8f1; }
+  .pr-nowrap { white-space: nowrap; }
+}
