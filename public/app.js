@@ -101,7 +101,7 @@ function childSummary(c) {
   ];
   const sz = [c.sizes.shirt && `Camiseta ${c.sizes.shirt}`, c.sizes.pants && `Calça ${c.sizes.pants}`, c.sizes.shoe && `Tênis ${c.sizes.shoe}`].filter(Boolean);
   if (sz.length) lines.push(`Tamanhos: ${sz.join(' · ')}`);
-  lines.push('📦 Entregar até 01/12 · identifique o presente com o nome e a turma da criança.');
+  lines.push('📦 Entregar até 03/12 · identifique o presente com o nome e a turma da criança.');
   return lines.join('\n');
 }
 
@@ -127,7 +127,7 @@ function card(c) {
     footer = h('div', { class: 'badge mine' }, c.delivered ? '✅ Sua criança · entregue' : '💛 Sua criança');
   } else if (c.mine) {
     footer = h('div', {},
-      h('div', { class: 'badge mine' }, c.delivered ? '✅ Sua criança · presente entregue' : '💛 Sua criança · entregar até 01/12'),
+      h('div', { class: 'badge mine' }, c.delivered ? '✅ Sua criança · presente entregue' : '💛 Sua criança · entregar até 03/12'),
       h('div', { class: 'share-row' },
         h('a', { class: 'btn btn-small btn-whats', href: `https://wa.me/?text=${encodeURIComponent(childSummary(c))}`, target: '_blank', rel: 'noopener', 'data-tip': 'Enviar os dados para você ou sua família' }, '📲 WhatsApp'),
         h('button', { type: 'button', class: 'btn btn-small btn-ghost', onclick: () => copyText(childSummary(c)), 'data-tip': 'Copiar os dados da cartinha' }, '📋 Copiar'),

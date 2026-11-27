@@ -1,7 +1,7 @@
 // Local e contatos de entrega. Ficam fora do HTML público: só padrinhos liberados recebem
 // (telefones pessoais dos organizadores e endereço do espaço das crianças).
 export const DELIVERY = {
-  deadline: '01/12',
+  deadline: '03/12',
   place: 'Espaço CÉU',
   address: 'Rua José Moreira Primeiro, s/n · Bairro Nossa Senhora de Lourdes',
   contacts: [
